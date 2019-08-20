@@ -1,3 +1,4 @@
+const { Response } = require('./response');
 
 exports.use = (handler) => {
   return (event, context, callback) => {
@@ -20,29 +21,7 @@ exports.use = (handler) => {
       // resource: string;
     };
 
-    let responseObj = {
-      statusCode: 200,
-      headers: {},
-      body: ''
-    };
-
-    const response = {
-      status: (status) => {
-        responseObj.statusCode = status;
-      },
-      send: (body) => {
-        responseObj.body = body;
-        callback(null, responseObj);
-      },
-      json: (body) => {
-        responseObj.body = JSON.stringify(body);
-        responseObj.headers['Content-Type'] = 'application/json';
-        callback(null, responseObj);
-      },
-      end: () => {
-        callback(null, responseObj);
-      }
-    };
+    const response = new Response(callback);
 
     try {
       handler(request, response);
