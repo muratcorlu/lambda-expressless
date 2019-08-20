@@ -36,4 +36,3 @@ exports.handler = use((req, res) => {
   })
 });
 ```
-
