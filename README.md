@@ -36,3 +36,39 @@ exports.handler = use((req, res) => {
   })
 });
 ```
+
+## Supported Features
+
+This project aims to implement functionalities of ExpressJS middlewares as much as possible. `Request` and `Response` objects have properties and methods listed below.
+
+### Request Object
+
+Properties:
+
+| Property    | Notes |
+|-------------|-------|
+| [body](https://expressjs.com/en/4x/api.html#req.body) | - |
+| [path](https://expressjs.com/en/4x/api.html#req.path) | - |
+| [method](https://expressjs.com/en/4x/api.html#req.method) | - |
+| [query](https://expressjs.com/en/4x/api.html#req.query) | Doesn't include repeated query parameters. |
+| [params](https://expressjs.com/en/4x/api.html#req.params) | - |
+| [headers](https://expressjs.com/en/4x/api.html#req.headers) | Doesn't include repeaded headers values |
+
+Methods:
+
+| Method    | Notes |
+|-------------|-------|
+| [get()](https://expressjs.com/en/4x/api.html#req.get) | Works case sensitive |
+| [is()](https://expressjs.com/en/4x/api.html#req.is) | Doesn't support `*` wildcard checks(like `text/*`) |
+
+### Response Object
+
+Methods:
+
+| Method    | Notes |
+|-------------|-------|
+| [set()](https://expressjs.com/en/4x/api.html#res.set) | Only supports `key, value` parameters |
+| [send()](https://expressjs.com/en/4x/api.html#res.send) | Only supports string values |
+| [status()](https://expressjs.com/en/4x/api.html#res.status) | - |
+| [end()](https://expressjs.com/en/4x/api.html#res.end) | - |
+| [json()](https://expressjs.com/en/4x/api.html#res.json) | - |
