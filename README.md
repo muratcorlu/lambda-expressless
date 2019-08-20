@@ -37,7 +37,7 @@ exports.handler = use((req, res) => {
 });
 ```
 
-## Supported Features
+## Supported Features and Limitations
 
 This project aims to implement functionalities of ExpressJS middlewares as much as possible. `Request` and `Response` objects have properties and methods listed below.
 
