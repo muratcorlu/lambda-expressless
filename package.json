@@ -4,8 +4,7 @@
   "description": "Wrap AWS Lambda functions with Express-like functions to simplify your code",
   "main": "src/lambda-wrapper.js",
   "scripts": {
-    "test": "jest",
-    "coverage": "jest --coverage",
+    "test": "jest —-coverage",
     "travis-deploy-once": "travis-deploy-once",
     "semantic-release": "semantic-release"
   },
