@@ -1,4 +1,4 @@
-# lambda-expressless (WIP)
+# lambda-expressless
 
 [![Build Status](https://travis-ci.org/muratcorlu/lambda-expressless.svg?branch=master)](https://travis-ci.org/muratcorlu/lambda-expressless) [![npm version](https://badge.fury.io/js/lambda-expressless.svg)](https://www.npmjs.com/package/lambda-expressless) [![codecov](https://codecov.io/gh/muratcorlu/lambda-expressless/branch/master/graph/badge.svg)](https://codecov.io/gh/muratcorlu/lambda-expressless) [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
@@ -59,6 +59,9 @@ const getUser = (req, res) => {
 
 exports.handler = use(checkUser, getUser);
 ```
+## Installation
+
+```npm i lambda-expressless```
 
 ## Supported Features and Limitations
 
@@ -95,3 +98,13 @@ Methods:
 | [status()](https://expressjs.com/en/4x/api.html#res.status) | - |
 | [end()](https://expressjs.com/en/4x/api.html#res.end) | - |
 | [json()](https://expressjs.com/en/4x/api.html#res.json) | - |
+
+## Contribution
+
+Every contribution is very welcome. Keep these in your mind when you want to make a contribution:
+
+1. Because of we use [semantic-release](https://github.com/semantic-release/semantic-release) you need to use [Angular Commit Message Conventions](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) in your commit messages.
+2. Keep code coverage 100% with your updated tests.
+3. Check your changes with a Lambda environment. You can use [SAM-CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) to test on your local.
+4. Don't forget to update documentation(this readme file) about your changes.
+
