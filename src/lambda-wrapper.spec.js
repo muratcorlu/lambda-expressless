@@ -1,52 +1,9 @@
 const { use } = require('./lambda-wrapper');
 
-test('should send json output properly', async () => {
-
-  const lambdaHandler = use((req, res) => {
-    res.json({a: 1});
-  });
-
+describe('Lambda Wrapper', () => {
   const proxyRequest = {
-    body: '',
+    body: null,
     headers: {},
-    multiValueHeaders: {},
-    httpMethod: 'GET',
-    isBase64Encoded: false,
-    path: '/path',
-    pathParameters: { },
-    queryStringParameters: { },
-    multiValueQueryStringParameters: { },
-    stageVariables: { },
-    requestContext: {},
-    resource: ''
-  };
-  const callback = jest.fn();
-  lambdaHandler(proxyRequest, {}, callback);
-
-  expect(callback).toBeCalledWith(null, {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: '{"a":1}'
-  });
-
-});
-
-
-test('should handle json body on a post request', async () => {
-
-  const lambdaHandler = use((req, res) => {
-    res.json(req.body);
-  });
-
-  const requestObject = JSON.stringify({a: 1});
-
-  const proxyRequest = {
-    body: requestObject,
-    headers: {
-      'Content-Type': 'application/json'
-    },
     multiValueHeaders: {},
     httpMethod: 'POST',
     isBase64Encoded: false,
@@ -58,15 +15,141 @@ test('should handle json body on a post request', async () => {
     requestContext: {},
     resource: ''
   };
-  const callback = jest.fn();
-  lambdaHandler(proxyRequest, {}, callback);
 
-  expect(callback).toBeCalledWith(null, {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: requestObject
+  it('should send json output properly', async () => {
+
+    const lambdaHandler = use((req, res) => {
+      res.json({a: 1});
+    });
+
+    const proxyRequest = {
+      body: '',
+      headers: {},
+      multiValueHeaders: {},
+      httpMethod: 'GET',
+      isBase64Encoded: false,
+      path: '/path',
+      pathParameters: { },
+      queryStringParameters: { },
+      multiValueQueryStringParameters: { },
+      stageVariables: { },
+      requestContext: {},
+      resource: ''
+    };
+    const callback = (err, payload) => {
+      expect(err).toBe(null);
+      expect(payload).toEqual({
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: '{"a":1}'
+      });
+    };
+
+    await lambdaHandler(proxyRequest, {}, callback);
+
   });
 
+
+  it('should handle json body on a post request', () => {
+
+    const lambdaHandler = use((req, res) => {
+      res.json(req.body);
+    });
+
+    const requestObject = JSON.stringify({a: 1});
+
+    const proxyRequest = {
+      body: requestObject,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      multiValueHeaders: {},
+      httpMethod: 'POST',
+      isBase64Encoded: false,
+      path: '/path',
+      pathParameters: { },
+      queryStringParameters: { },
+      multiValueQueryStringParameters: { },
+      stageVariables: { },
+      requestContext: {},
+      resource: ''
+    };
+    const callback = (err, payload) => {
+      expect(err).toBe(null);
+      expect(payload).toEqual({
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: requestObject
+      });
+    }
+
+    lambdaHandler(proxyRequest, {}, callback);
+
+  });
+
+  it('should run multiple middlewares', () => {
+    const lambdaHandler = use((req, res, next) => {
+      req.params.fromFirstEndpoint = '1';
+      next();
+    }, (req, res) => {
+      res.json({b: req.params.fromFirstEndpoint});
+    });
+
+    const callback = (err, payload) => {
+      expect(err).toBe(null);
+      expect(payload).toEqual({
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({"b":"1"})
+      });
+    }
+
+    lambdaHandler(proxyRequest, {}, callback);
+  });
+
+  it('should run multiple middlewares as arrays', () => {
+    const lambdaHandler = use([(req, res, next) => {
+      req.params.fromFirstEndpoint = '1';
+      next();
+    }, (req, res, next) => {
+      req.params.fromSecondEndpoint = '1';
+      next();
+    }], (req, res) => {
+      res.json({
+        fromFirstEndpoint: req.params.fromFirstEndpoint,
+        fromSecondEndpoint: req.params.fromSecondEndpoint,
+      })
+    });
+
+    const callback = (err, payload) => {
+      expect(err).toBe(null);
+      expect(payload).toEqual({
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({"b":"1"})
+      });
+    }
+
+    lambdaHandler(proxyRequest, {}, callback);
+  });
+
+  it('should handle errors', () => {
+    const lambdaHandler = use((req, res, next) => {
+      throw new Error('test');
+    });
+
+    const callback = (err, payload) => {
+      expect(err).toThrow(Error);
+    }
+
+    lambdaHandler(proxyRequest, {}, callback);
+  })
 });

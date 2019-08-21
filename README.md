@@ -37,6 +37,29 @@ exports.handler = use((req, res) => {
 });
 ```
 
+You can also use multiple middlewares for a single handler:
+
+```js
+const { use } = require('lambda-expressless');
+
+const checkUser = (req, res, next) => {
+  if (req.get('Authorization') === 'someToken') {
+    next()
+  } else {
+    req.status(403).end('Forbidden');
+  }
+};
+
+const getUser = (req, res) => {
+  res.json({
+    id: '12',
+    name: 'Murat'
+  });
+};
+
+exports.handler = use(checkUser, getUser);
+```
+
 ## Supported Features and Limitations
 
 This project aims to implement functionalities of ExpressJS middlewares as much as possible. `Request` and `Response` objects have properties and methods listed below.
