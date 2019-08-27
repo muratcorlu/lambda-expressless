@@ -41,7 +41,7 @@ describe('Lambda Wrapper', () => {
       expect(payload).toEqual({
         statusCode: 200,
         headers: {
-          'Content-Type': 'application/json'
+          'content-type': 'application/json'
         },
         body: '{"a":1}'
       });
@@ -81,7 +81,7 @@ describe('Lambda Wrapper', () => {
       expect(payload).toEqual({
         statusCode: 200,
         headers: {
-          'Content-Type': 'application/json'
+          'content-type': 'application/json'
         },
         body: requestObject
       });
@@ -104,7 +104,7 @@ describe('Lambda Wrapper', () => {
       expect(payload).toEqual({
         statusCode: 200,
         headers: {
-          'Content-Type': 'application/json'
+          'content-type': 'application/json'
         },
         body: JSON.stringify({"b":"1"})
       });
@@ -132,9 +132,12 @@ describe('Lambda Wrapper', () => {
       expect(payload).toEqual({
         statusCode: 200,
         headers: {
-          'Content-Type': 'application/json'
+          'content-type': 'application/json'
         },
-        body: JSON.stringify({"b":"1"})
+        body: JSON.stringify({
+          fromFirstEndpoint: '1',
+          fromSecondEndpoint: '1',
+        })
       });
     }
 
@@ -143,11 +146,11 @@ describe('Lambda Wrapper', () => {
 
   it('should handle errors', () => {
     const lambdaHandler = use((req, res, next) => {
-      throw new Error('test');
+      throw Error('test');
     });
 
     const callback = (err, payload) => {
-      expect(err).toThrow(Error);
+      expect(err).toStrictEqual(Error('test'));
     }
 
     lambdaHandler(proxyRequest, {}, callback);

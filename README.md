@@ -81,7 +81,7 @@ Methods:
 
 | Method    | Notes |
 |-------------|-------|
-| [get()](https://expressjs.com/en/4x/api.html#req.get) | Works case sensitive |
+| [get()](https://expressjs.com/en/4x/api.html#req.get) | - |
 | [is()](https://expressjs.com/en/4x/api.html#req.is) | Doesn't support `*` wildcard checks(like `text/*`) |
 
 ### Response Object
@@ -90,8 +90,10 @@ Methods:
 
 | Method    | Notes |
 |-------------|-------|
+| [get()](https://expressjs.com/en/4x/api.html#res.get) | - |
 | [set()](https://expressjs.com/en/4x/api.html#res.set) | Only supports `key, value` parameters |
 | [send()](https://expressjs.com/en/4x/api.html#res.send) | Only supports string values |
 | [status()](https://expressjs.com/en/4x/api.html#res.status) | - |
 | [end()](https://expressjs.com/en/4x/api.html#res.end) | - |
 | [json()](https://expressjs.com/en/4x/api.html#res.json) | - |
+| [type()](https://expressjs.com/en/4x/api.html#res.type) | - |

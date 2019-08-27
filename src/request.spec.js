@@ -25,6 +25,13 @@ describe('Request object', () => {
     expect(request.body).toEqual(requestObject);
   });
 
+  it('should read header', () => {
+    const request = new Request(event);
+
+    expect(request.get('Content-Type')).toBe('application/json');
+    expect(request.get('content-type')).toBe('application/json');
+  })
+
   it('check type', () => {
     const request = new Request(event);
     expect(request.is('json')).toBe(true);

@@ -1,15 +1,16 @@
+/**
+ *
+ */
 class Request {
   constructor(event) {
-    let body = event.body;
-    if (event.headers['Content-Type'] && event.headers['Content-Type'].indexOf('json') > -1) {
-      body = JSON.parse(event.body);
-    }
-
     this.method = event.httpMethod;
     this.query = event.queryStringParameters;
     this.path = event.path;
     this.params = event.pathParameters;
-    this.headers = event.headers;
+    this.headers = Object.keys(event.headers).reduce((headers, key) => {
+      headers[key.toLowerCase()] = event.headers[key];
+      return headers;
+    }, {});
 
     this.body = event.body;
     if (this.is('json')) {
@@ -18,7 +19,7 @@ class Request {
   }
 
   get(key) {
-    return this.headers[key];
+    return this.headers[key.toLowerCase()];
   }
 
   is(mimeType) {
