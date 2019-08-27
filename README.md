@@ -78,7 +78,7 @@ Properties:
 | [method](https://expressjs.com/en/4x/api.html#req.method) | - |
 | [query](https://expressjs.com/en/4x/api.html#req.query) | Doesn't include repeated query parameters. |
 | [params](https://expressjs.com/en/4x/api.html#req.params) | - |
-| [headers](https://expressjs.com/en/4x/api.html#req.headers) | Doesn't include repeaded headers values |
+| [headers](https://expressjs.com/en/4x/api.html#req.headers) | Doesn't include repeated headers values |
 
 Methods:
 
