@@ -50,5 +50,39 @@ describe('Response object', () => {
     // Should work case insensitive
     expect(response.get('x-Header')).toBe('a');
   });
+
+  it('can chain status method', () => {
+    const cb = (err, response) => {
+      expect(response.statusCode).toBe(201);
+    };
+
+    const response = new Response(null, cb);
+
+    response.status(201).end();
+  });
+
+  it('can chain set method', () => {
+    const cb = (err, response) => {
+      expect(response.headers).toEqual({
+        'x-header': 'a'
+      });
+    };
+
+    const response = new Response(null, cb);
+
+    response.set('x-header', 'a').end();
+  });
+
+  it('can chain type method', () => {
+    const cb = (err, response) => {
+      expect(response.headers).toEqual({
+        'content-type': 'text/xml'
+      });
+    };
+
+    const response = new Response(null, cb);
+
+    response.type('text/xml').end();
+  });
 });
 

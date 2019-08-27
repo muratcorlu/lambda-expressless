@@ -70,6 +70,7 @@ class Response {
    */
   set(key, value) {
     this.responseObj.headers[key.toLowerCase()] = value;
+    return this;
   }
 
   /**
@@ -79,6 +80,7 @@ class Response {
    */
   status(status) {
     this.responseObj.statusCode = status;
+    return this;
   }
 
   /**
@@ -88,6 +90,7 @@ class Response {
    */
   type(type) {
     this.set('Content-Type', type);
+    return this;
   }
 }
 
