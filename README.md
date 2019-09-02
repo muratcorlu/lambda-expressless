@@ -28,8 +28,9 @@ you'll have this:
 
 ```js
 const { use } = require('lambda-expressless');
+const bodyParser = require('body-parser');
 
-exports.handler = use((req, res) => {
+exports.handler = use(bodyParser.json(), (req, res) => {
   res.status(201).json({
     success: false,
     data: req.body.id
@@ -59,6 +60,11 @@ const getUser = (req, res) => {
 
 exports.handler = use(checkUser, getUser);
 ```
+
+You can use many popular Express Middlewares. Some examples are:
+
+- [body-parser](https://github.com/expressjs/body-parser)
+
 ## Installation
 
 ```npm i lambda-expressless```
@@ -73,8 +79,15 @@ Properties:
 
 | Property    | Notes |
 |-------------|-------|
-| [body](https://expressjs.com/en/4x/api.html#req.body) | - |
+| [body](https://expressjs.com/en/4x/api.html#req.body) | You need to use [body-parser](https://github.com/expressjs/body-parser) |
+| [hostname](https://expressjs.com/en/4x/api.html#req.hostname) | - |
+| [host](https://expressjs.com/en/4x/api.html#req.host) | - |
+| [xhr](https://expressjs.com/en/4x/api.html#req.xhr) | - |
+| [ip](https://expressjs.com/en/4x/api.html#req.ip) | - |
+| [ips](https://expressjs.com/en/4x/api.html#req.ips) | - |
 | [path](https://expressjs.com/en/4x/api.html#req.path) | - |
+| [protocol](https://expressjs.com/en/4x/api.html#req.protocol) | - |
+| [secure](https://expressjs.com/en/4x/api.html#req.secure) | - |
 | [method](https://expressjs.com/en/4x/api.html#req.method) | - |
 | [query](https://expressjs.com/en/4x/api.html#req.query) | Doesn't include repeated query parameters. |
 | [params](https://expressjs.com/en/4x/api.html#req.params) | - |

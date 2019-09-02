@@ -1,4 +1,5 @@
 const { use } = require('./lambda-wrapper');
+const bodyParser = require('body-parser');
 
 describe('Lambda Wrapper', () => {
   const proxyRequest = {
@@ -54,7 +55,7 @@ describe('Lambda Wrapper', () => {
 
   it('should handle json body on a post request', () => {
 
-    const lambdaHandler = use((req, res) => {
+    const lambdaHandler = use(bodyParser.json(), (req, res) => {
       res.json(req.body);
     });
 
@@ -63,7 +64,8 @@ describe('Lambda Wrapper', () => {
     const proxyRequest = {
       body: requestObject,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Content-Length': requestObject.length
       },
       multiValueHeaders: {},
       httpMethod: 'POST',

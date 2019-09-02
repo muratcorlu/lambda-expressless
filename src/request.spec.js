@@ -5,7 +5,8 @@ describe('Request object', () => {
   const event = {
     body: JSON.stringify(requestObject),
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Content-Length': JSON.stringify(requestObject).length
     },
     multiValueHeaders: {},
     httpMethod: 'POST',
@@ -18,12 +19,6 @@ describe('Request object', () => {
     requestContext: {},
     resource: ''
   };
-
-  it('read body', () => {
-    const request = new Request(event);
-
-    expect(request.body).toEqual(requestObject);
-  });
 
   it('should read header', () => {
     const request = new Request(event);
