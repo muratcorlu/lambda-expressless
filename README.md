@@ -97,8 +97,13 @@ Methods:
 
 | Method    | Notes |
 |-------------|-------|
+| [accepts()](https://expressjs.com/en/4x/api.html#req.accepts) | - |
+| [acceptsEncodings()](https://expressjs.com/en/4x/api.html#req.acceptsEncodings) | - |
+| [acceptsCharsets()](https://expressjs.com/en/4x/api.html#req.acceptsCharsets) | - |
+| [acceptsLanguages()](https://expressjs.com/en/4x/api.html#req.acceptsLanguages) | - |
 | [get()](https://expressjs.com/en/4x/api.html#req.get) | - |
-| [is()](https://expressjs.com/en/4x/api.html#req.is) | Doesn't support `*` wildcard checks(like `text/*`) |
+| [header()](https://expressjs.com/en/4x/api.html#req.header) | - |
+| [is()](https://expressjs.com/en/4x/api.html#req.is) | - |
 
 ### Response Object
 
