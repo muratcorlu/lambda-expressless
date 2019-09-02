@@ -35,6 +35,68 @@ class Response {
   }
 
   /**
+   * Performs content-negotiation on the Accept HTTP header
+   * on the request object, when present. It uses `req.accepts()`
+   * to select a handler for the request, based on the acceptable
+   * types ordered by their quality values. If the header is not
+   * specified, the first callback is invoked. When no match is
+   * found, the server responds with 406 “Not Acceptable”, or invokes
+   * the `default` callback.
+   *
+   * The `Content-Type` response header is set when a callback is
+   * selected. However, you may alter this within the callback using
+   * methods such as `res.set()` or `res.type()`.
+   *
+   * The following example would respond with `{ "message": "hey" }`
+   * when the `Accept` header field is set to “application/json”
+   * or “*\/json” (however if it is “*\/*”, then the response will
+   * be “hey”).
+   *
+   *    res.format({
+   *      'text/plain': function(){
+   *        res.send('hey');
+   *      },
+   *
+   *      'text/html': function(){
+   *        res.send('<p>hey</p>');
+   *      },
+   *
+   *      'appliation/json': function(){
+   *        res.send({ message: 'hey' });
+   *      }
+   *    });
+   *
+   * By default it passes an `Error`
+   * with a `.status` of 406 to `next(err)`
+   * if a match is not made. If you provide
+   * a `.default` callback it will be invoked
+   * instead.
+   *
+   * @param {Object} obj
+   * @return {ServerResponse} for chaining
+   * @public
+   */
+  format(obj) {
+    const defaultFn = obj.default;
+    const types = Object.keys(obj);
+    const chosenType = this.req.accepts(types);
+
+    if (chosenType) {
+      this.type(chosenType);
+      obj[chosenType](this.req, this, this.req.next);
+    } else if (defaultFn) {
+      return defaultFn(this.req, this, this.req.next);
+    } else {
+      var err = new Error('Not Acceptable');
+      err.status = err.statusCode = 406;
+      err.types = types;
+      this.req.next(err);
+    }
+
+    return this;
+  }
+
+  /**
    * Sends a JSON response. This method sends a response (with the correct content-type) that is the parameter converted to a JSON string using JSON.stringify().
    *
    * The parameter can be any JSON type, including object, array, string, Boolean, number, or null, and you can also use it to convert other values to JSON.

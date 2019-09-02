@@ -112,6 +112,7 @@ Methods:
 | Method    | Notes |
 |-------------|-------|
 | [get()](https://expressjs.com/en/4x/api.html#res.get) | - |
+| [format()](https://expressjs.com/en/4x/api.html#res.format) | Doesn't support shorthand mime-types |
 | [set()](https://expressjs.com/en/4x/api.html#res.set) | Only supports `key, value` parameters |
 | [send()](https://expressjs.com/en/4x/api.html#res.send) | Only supports string values |
 | [status()](https://expressjs.com/en/4x/api.html#res.status) | - |

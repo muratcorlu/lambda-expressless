@@ -1,4 +1,5 @@
 const { Response } = require('./response');
+const { Request } = require('./request');
 
 describe('Response object', () => {
   it('set response status properly', () => {
@@ -84,5 +85,132 @@ describe('Response object', () => {
 
     response.type('text/xml').end();
   });
+
+  describe('should send correct response via accept header', () => {
+    it('with regular header', () => {
+
+      const event = {
+        headers: {
+          'Accept': 'text/xml',
+          'Content-Length': 0
+        },
+        multiValueHeaders: {},
+        httpMethod: 'POST',
+        isBase64Encoded: false,
+        path: '/path',
+        pathParameters: { },
+        queryStringParameters: { },
+        multiValueQueryStringParameters: { },
+        stageVariables: { },
+        requestContext: {},
+        resource: ''
+      };
+
+      const req = new Request(event);
+      req.next = (error) => {
+
+      };
+
+      const cb = (err, response) => {
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toBe('text/xml');
+        expect(response.body).toBe('<xml/>');
+      };
+
+      const response = new Response(req, cb);
+
+      response.format({
+        'application/json': (req, res, next) => {
+          res.json({a: 1});
+        },
+        'text/xml': (req, res, next) => {
+          res.send('<xml/>');
+        }
+      });
+    });
+
+    it('without regular header', () => {
+
+      const event = {
+        headers: {
+          'Accept': 'text/html',
+          'Content-Length': 0
+        },
+        multiValueHeaders: {},
+        httpMethod: 'POST',
+        isBase64Encoded: false,
+        path: '/path',
+        pathParameters: { },
+        queryStringParameters: { },
+        multiValueQueryStringParameters: { },
+        stageVariables: { },
+        requestContext: {},
+        resource: ''
+      };
+
+      const req = new Request(event);
+      req.next = (error) => {
+
+      };
+
+      const cb = (err, response) => {
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toBe('text/html');
+        expect(response.body).toBe('<p>hi</p>');
+      };
+
+      const response = new Response(req, cb);
+
+      response.format({
+        'application/json': (req, res, next) => {
+          res.json({a: 1});
+        },
+        'text/xml': (req, res, next) => {
+          res.send('<xml/>');
+        },
+        'default': (req, res, next) => {
+          res.type('text/html').send('<p>hi</p>');
+        }
+      });
+    });
+
+
+    it('with non acceptable accept header', () => {
+
+      const event = {
+        headers: {
+          'Accept': 'image/jpeg',
+          'Content-Length': 0
+        },
+        multiValueHeaders: {},
+        httpMethod: 'POST',
+        isBase64Encoded: false,
+        path: '/path',
+        pathParameters: { },
+        queryStringParameters: { },
+        multiValueQueryStringParameters: { },
+        stageVariables: { },
+        requestContext: {},
+        resource: ''
+      };
+
+      const req = new Request(event);
+      req.next = (error) => {
+        expect(error.status).toBe(406);
+        expect(error).toEqual(Error('Not Acceptable'));
+      };
+
+      const cb = (err, response) => {
+      };
+
+      const response = new Response(req, cb);
+
+      response.format({
+        'application/json': (req, res, next) => {
+          res.json({a: 1});
+        }
+      });
+    });
+  })
 });
 
