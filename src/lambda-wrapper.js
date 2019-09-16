@@ -3,6 +3,8 @@ const { Request } = require('./request');
 
 exports.use = (...handlers) => {
   return (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
     const request = new Request(event);
     const response = new Response(request, callback);
     request.res = response;
