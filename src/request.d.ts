@@ -60,7 +60,6 @@ export class Request extends Readable {
      *
      * @param {String|Array} type(s)
      * @return {String|Array|Boolean}
-     * @public
     */
     accepts(args: string | string[]): string | boolean | string[];
     /**
