@@ -9,14 +9,20 @@ class Request extends ReadableStream {
   constructor(event) {
     super();
 
-    this.headers = Object.keys(event.headers).reduce((headers, key) => {
-      headers[key.toLowerCase()] = event.headers[key];
+    this.headers = Object.keys(event.multiValueHeaders).reduce((headers, key) => {
+      const value = event.multiValueHeaders[key];
+      headers[key.toLowerCase()] = value.length > 1 ? value : value[0];
       return headers;
     }, {});
 
     this.hostname = this.headers.host
     this.method = event.httpMethod;
-    this.query = event.queryStringParameters;
+    this.query = Object.keys(event.multiValueQueryStringParameters).reduce((queryParams, key) => {
+      const value = event.multiValueQueryStringParameters[key];
+      queryParams[key] = value.length > 1 ? value : value[0];
+      return queryParams;
+    }, {});
+
     this.path = event.path;
     this.params = event.pathParameters;
 

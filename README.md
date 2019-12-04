@@ -89,9 +89,9 @@ Properties:
 | [protocol](https://expressjs.com/en/4x/api.html#req.protocol) | - |
 | [secure](https://expressjs.com/en/4x/api.html#req.secure) | - |
 | [method](https://expressjs.com/en/4x/api.html#req.method) | - |
-| [query](https://expressjs.com/en/4x/api.html#req.query) | Doesn't include repeated query parameters. |
+| [query](https://expressjs.com/en/4x/api.html#req.query) | - |
 | [params](https://expressjs.com/en/4x/api.html#req.params) | - |
-| [headers](https://expressjs.com/en/4x/api.html#req.headers) | Doesn't include repeated headers values |
+| [headers](https://expressjs.com/en/4x/api.html#req.headers) | - |
 
 Methods:
 

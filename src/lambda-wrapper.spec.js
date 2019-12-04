@@ -67,7 +67,10 @@ describe('Lambda Wrapper', () => {
         'Content-Type': 'application/json',
         'Content-Length': requestObject.length
       },
-      multiValueHeaders: {},
+      multiValueHeaders: {
+        'Content-Type': [ 'application/json' ],
+        'Content-Length': [ requestObject.length ]
+      },
       httpMethod: 'POST',
       isBase64Encoded: false,
       path: '/path',

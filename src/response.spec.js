@@ -94,7 +94,10 @@ describe('Response object', () => {
           'Accept': 'text/xml',
           'Content-Length': 0
         },
-        multiValueHeaders: {},
+        multiValueHeaders: {
+          'Accept': [ 'text/xml' ],
+          'Content-Length': [ 0 ]
+        },
         httpMethod: 'POST',
         isBase64Encoded: false,
         path: '/path',
@@ -136,7 +139,10 @@ describe('Response object', () => {
           'Accept': 'text/html',
           'Content-Length': 0
         },
-        multiValueHeaders: {},
+        multiValueHeaders: {
+          'Accept': [ 'text/html' ],
+          'Content-Length': [ 0 ]
+        },
         httpMethod: 'POST',
         isBase64Encoded: false,
         path: '/path',
@@ -182,7 +188,10 @@ describe('Response object', () => {
           'Accept': 'image/jpeg',
           'Content-Length': 0
         },
-        multiValueHeaders: {},
+        multiValueHeaders: {
+          'Accept': [ 'image/jpeg' ],
+          'Content-Length': [ 0 ]
+        },
         httpMethod: 'POST',
         isBase64Encoded: false,
         path: '/path',
