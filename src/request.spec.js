@@ -2,34 +2,37 @@ const { Request } = require('./request');
 
 describe('Request object', () => {
   const requestObject = {a:1};
-  const event = {
-    body: JSON.stringify(requestObject),
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': JSON.stringify(requestObject).length,
-      'X-Header': 'value2'
-    },
-    multiValueHeaders: {
-      'Content-Type': [ 'application/json' ],
-      'Content-Length': [ JSON.stringify(requestObject).length ],
-      'X-Header': [ 'value1', 'value2' ]
-    },
-    httpMethod: 'POST',
-    isBase64Encoded: false,
-    path: '/path',
-    pathParameters: { },
-    queryStringParameters: {
-      a: '1',
-      b: '2'
-    },
-    multiValueQueryStringParameters: {
-      a: [ '1' ],
-      b: [ '1', '2']
-    },
-    stageVariables: { },
-    requestContext: {},
-    resource: ''
-  };
+  let event;
+  beforeEach(() => {
+    event = {
+      body: JSON.stringify(requestObject),
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': JSON.stringify(requestObject).length,
+        'X-Header': 'value2'
+      },
+      multiValueHeaders: {
+        'Content-Type': [ 'application/json' ],
+        'Content-Length': [ JSON.stringify(requestObject).length ],
+        'X-Header': [ 'value1', 'value2' ]
+      },
+      httpMethod: 'POST',
+      isBase64Encoded: false,
+      path: '/path',
+      pathParameters: { },
+      queryStringParameters: {
+        a: '1',
+        b: '2'
+      },
+      multiValueQueryStringParameters: {
+        a: [ '1' ],
+        b: [ '1', '2']
+      },
+      stageVariables: { },
+      requestContext: {},
+      resource: ''
+    };
+  });
 
   it('should read query parameter', () => {
     const request = new Request(event);
@@ -55,6 +58,20 @@ describe('Request object', () => {
     const request = new Request(event);
 
     expect(request.get('X-Header')).toEqual(['value1', 'value2']);
+  });
+
+  it('should read query as empty object if there is no queryparamters', () => {
+    delete event.multiValueQueryStringParameters;
+    const request = new Request(event);
+
+    expect(request.query).toEqual({});
+  });
+
+  it('should read headers as empty object if there is no headers', () => {
+    delete event.multiValueHeaders;
+    const request = new Request(event);
+
+    expect(request.headers).toEqual({});
   });
 
   it('should handle weird header asks', () => {
