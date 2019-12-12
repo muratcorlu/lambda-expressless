@@ -131,6 +131,6 @@ Every contribution is very welcome. Keep these in your mind when you want to mak
 
 ## Troubleshooting
 
-### I'm making a POSY request with JSON by using bodyParser as middleware but `req.body` is always `{}`
+### I'm making a POST request with JSON by using bodyParser as middleware but `req.body` is always `{}`
 
 Please check your `Content-Type` and `Content-Length` request headers. For JSON requests `Content-Type` should be `application/json` and `Content-Length` should be size(in bytes) of JSON string in body.
