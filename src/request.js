@@ -30,6 +30,10 @@ class Request extends ReadableStream {
     this.path = event.path;
     this.params = event.pathParameters;
 
+    if (!this.get('Content-Length') && 'body' in event && event.body !== null) {
+      this.headers['content-length'] = event.body.length;
+    }
+
     this.protocol = this.get('X-Forwarded-Proto')
     this.secure = this.protocol === 'https';
     this.ips = (this.get('X-Forwarded-For') || '').split(', ');

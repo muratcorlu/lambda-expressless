@@ -69,6 +69,7 @@ describe('Request object', () => {
 
   it('should read headers as empty object if there is no headers', () => {
     delete event.multiValueHeaders;
+    delete event.body;
     const request = new Request(event);
 
     expect(request.headers).toEqual({});
@@ -136,4 +137,13 @@ describe('Request object', () => {
     expect(request.acceptsLanguages('tr', 'en')).toBe('tr');
 
   });
+
+  it('should handle content-length header if its not provided', () => {
+    delete event.headers['content-length'];
+    delete event.multiValueHeaders['content-length'];
+
+    const request = new Request(event);
+    const body = JSON.stringify(requestObject);
+    expect(request.get('content-length')).toBe(body.length);
+  })
 });
