@@ -129,3 +129,8 @@ Every contribution is very welcome. Keep these in your mind when you want to mak
 3. Check your changes with a Lambda environment. You can use [SAM-CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) to test on your local.
 4. Don't forget to update documentation(this readme file) about your changes.
 
+## Troubleshooting
+
+### I'm making a POSY request with JSON by using bodyParser as middleware but `req.body` is always `{}`
+
+Please check your `Content-Type` and `Content-Length` request headers. For JSON requests `Content-Type` should be `application/json` and `Content-Length` should be size(in bytes) of JSON string in body.
