@@ -9,14 +9,13 @@ class Response {
    */
   constructor(req) {
     this.req = req;
+    this.writableEnded = false
     this.responseObj = {
       statusCode: 200,
       headers: {},
       body: ''
     };
   }
-
-  writableEnded = false
 
   /**
    * Ends the response process.
