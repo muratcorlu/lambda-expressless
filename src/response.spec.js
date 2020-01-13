@@ -3,14 +3,10 @@ const { Request } = require('./request');
 
 describe('Response object', () => {
   it('set response status properly', () => {
-    const cb = jest.fn();
-
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.status(404);
     response.end();
-
-    expect(cb).toHaveBeenCalledWith(null, {
+    expect(response.getApiGatewayResult()).toEqual({
       statusCode: 404,
       headers: {},
       body: ''
@@ -18,72 +14,49 @@ describe('Response object', () => {
   });
 
   it('send body properly', () => {
-    const cb = (err, response) => {
-      expect(response.body).toBe('hello');
-    };
-
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.send('hello');
+    expect(response.getApiGatewayResult().body).toBe('hello');
   });
 
   it('set content-type', () => {
-    const cb = (err, response) => {
-      expect(response.headers).toBe({
-        'content-type': 'text/html'
-      });
-    };
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.type('text/html');
-
+    expect(response.getApiGatewayResult().headers).toEqual({
+      'content-type': 'text/html'
+    });
   });
 
 
   it('get header', () => {
-    const cb = (err, response) => {};
-
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.set('X-Header', 'a');
-
     expect(response.get('X-Header')).toBe('a');
     // Should work case insensitive
     expect(response.get('x-Header')).toBe('a');
   });
 
   it('can chain status method', () => {
-    const cb = (err, response) => {
-      expect(response.statusCode).toBe(201);
-    };
-
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.status(201).end();
+    expect(response.statusCode).toBe(201);
+    expect(response.getApiGatewayResult().statusCode).toBe(201);
   });
 
   it('can chain set method', () => {
-    const cb = (err, response) => {
-      expect(response.headers).toEqual({
-        'x-header': 'a'
-      });
-    };
-
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.set('x-header', 'a').end();
+    expect(response.getApiGatewayResult().headers).toEqual({
+      'x-header': 'a'
+    });
   });
 
   it('can chain type method', () => {
-    const cb = (err, response) => {
-      expect(response.headers).toEqual({
-        'content-type': 'text/xml'
-      });
-    };
-
-    const response = new Response(null, cb);
-
+    const response = new Response(null);
     response.type('text/xml').end();
+    expect(response.getApiGatewayResult().headers).toEqual({
+      'content-type': 'text/xml'
+    });
   });
 
   describe('should send correct response via accept header', () => {
@@ -114,14 +87,7 @@ describe('Response object', () => {
 
       };
 
-      const cb = (err, response) => {
-        expect(response.statusCode).toBe(200);
-        expect(response.headers['content-type']).toBe('text/xml');
-        expect(response.body).toBe('<xml/>');
-      };
-
-      const response = new Response(req, cb);
-
+      const response = new Response(req);
       response.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
@@ -130,6 +96,11 @@ describe('Response object', () => {
           res.send('<xml/>');
         }
       });
+
+      const apiGatewayRes = response.getApiGatewayResult()
+      expect(apiGatewayRes.statusCode).toBe(200);
+      expect(apiGatewayRes.headers['content-type']).toBe('text/xml');
+      expect(apiGatewayRes.body).toBe('<xml/>');
     });
 
     it('without regular header', () => {
@@ -158,15 +129,8 @@ describe('Response object', () => {
       req.next = (error) => {
 
       };
-
-      const cb = (err, response) => {
-        expect(response.statusCode).toBe(200);
-        expect(response.headers['content-type']).toBe('text/html');
-        expect(response.body).toBe('<p>hi</p>');
-      };
-
-      const response = new Response(req, cb);
-
+      
+      const response = new Response(req);
       response.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
@@ -178,6 +142,11 @@ describe('Response object', () => {
           res.type('text/html').send('<p>hi</p>');
         }
       });
+
+      const apiGatewayRes = response.getApiGatewayResult()
+      expect(apiGatewayRes.statusCode).toBe(200);
+      expect(apiGatewayRes.headers['content-type']).toBe('text/html');
+      expect(apiGatewayRes.body).toBe('<p>hi</p>');
     });
 
 
@@ -209,10 +178,7 @@ describe('Response object', () => {
         expect(error).toEqual(Error('Not Acceptable'));
       };
 
-      const cb = (err, response) => {
-      };
-
-      const response = new Response(req, cb);
+      const response = new Response(req);
 
       response.format({
         'application/json': (req, res, next) => {

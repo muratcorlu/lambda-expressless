@@ -1,3 +1,6 @@
+const AWS_RES_BODY = Symbol('body')
+const AWS_RES_HEADERS = Symbol('body')
+
 /**
  * Response Object
  */
@@ -10,11 +13,18 @@ class Response {
   constructor(req) {
     this.req = req;
     this.writableEnded = false
-    this.responseObj = {
-      statusCode: 200,
-      headers: {},
-      body: ''
-    };
+    this.statusCode = 200
+    // Non-Express compatible props: Use symbols to avoid name clashes
+    this[AWS_RES_HEADERS] = {}
+    this[AWS_RES_BODY] = ''
+  }
+
+  getApiGatewayResult() {
+    return {
+      statusCode: this.statusCode,
+      headers: this[AWS_RES_HEADERS],
+      body: this[AWS_RES_BODY]
+    }
   }
 
   /**
@@ -33,7 +43,7 @@ class Response {
    * @param {string} key Header key to get
    */
   get(key) {
-    return this.responseObj.headers[key.toLowerCase()];
+    return this[AWS_RES_HEADERS][key.toLowerCase()];
   }
 
   /**
@@ -111,9 +121,8 @@ class Response {
    * @param {any} body Any type of oject
    */
   json(body) {
-    this.responseObj.body = JSON.stringify(body);
     this.set('Content-Type', 'application/json');
-    this.end();
+    this.send(JSON.stringify(body));
   }
 
   /**
@@ -122,7 +131,7 @@ class Response {
    * @param {any} body
    */
   send(body) {
-    this.responseObj.body = body;
+    this[AWS_RES_BODY] = body;
     this.end();
   }
 
@@ -133,7 +142,7 @@ class Response {
    * @param {string} value Header value
    */
   set(key, value) {
-    this.responseObj.headers[key.toLowerCase()] = value;
+    this[AWS_RES_HEADERS][key.toLowerCase()] = value;
     return this;
   }
 
@@ -143,7 +152,7 @@ class Response {
    * @param {integer} status Status code. Ex: 200, 201, 400, 404, 500 etc.
    */
   status(status) {
-    this.responseObj.statusCode = status;
+    this.statusCode = status
     return this;
   }
 

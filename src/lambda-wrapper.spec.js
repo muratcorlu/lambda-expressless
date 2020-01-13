@@ -1,4 +1,5 @@
-const { use } = require('./lambda-wrapper');
+const { ApiGatewayHandler } = require('./lambda-wrapper');
+const Router = require('router');
 const bodyParser = require('body-parser');
 
 describe('Lambda Wrapper', () => {
@@ -19,9 +20,11 @@ describe('Lambda Wrapper', () => {
 
   it('should send json output properly', async () => {
 
-    const lambdaHandler = use((req, res) => {
+    const router = Router()
+    router.use((req, res) => {
       res.json({a: 1});
-    });
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
     const proxyRequest = {
       body: '',
@@ -48,16 +51,19 @@ describe('Lambda Wrapper', () => {
       });
     };
 
-    await lambdaHandler(proxyRequest, {}, callback);
+    lambdaHandler(proxyRequest, {}, callback);
 
   });
 
 
   it('should handle json body on a post request', () => {
 
-    const lambdaHandler = use(bodyParser.json(), (req, res) => {
+    const router = Router()
+    router.use(bodyParser.json())
+    router.use((req, res) => {
       res.json(req.body);
-    });
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
     const requestObject = JSON.stringify({a: 1});
 
@@ -97,12 +103,15 @@ describe('Lambda Wrapper', () => {
   });
 
   it('should run multiple middlewares', () => {
-    const lambdaHandler = use((req, res, next) => {
+    const router = Router()
+    router.use((req, res, next) => {
       req.params.fromFirstEndpoint = '1';
       next();
-    }, (req, res) => {
+    })
+    router.use((req, res) => {
       res.json({b: req.params.fromFirstEndpoint});
-    });
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
     const callback = (err, payload) => {
       expect(err).toBe(null);
@@ -118,46 +127,47 @@ describe('Lambda Wrapper', () => {
     lambdaHandler(proxyRequest, {}, callback);
   });
 
-  it('should run multiple middlewares as arrays', () => {
-    const lambdaHandler = use([(req, res, next) => {
-      req.params.fromFirstEndpoint = '1';
-      next();
-    }, (req, res, next) => {
-      req.params.fromSecondEndpoint = '1';
-      next();
-    }], (req, res) => {
-      res.json({
-        fromFirstEndpoint: req.params.fromFirstEndpoint,
-        fromSecondEndpoint: req.params.fromSecondEndpoint,
-      })
-    });
-
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          fromFirstEndpoint: '1',
-          fromSecondEndpoint: '1',
-        })
-      });
-    }
-
-    lambdaHandler(proxyRequest, {}, callback);
-  });
-
   it('should handle errors', () => {
-    const lambdaHandler = use((req, res, next) => {
+    const router = Router()
+    router.use((req, res, next) => {
       throw Error('test');
-    });
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
     const callback = (err, payload) => {
       expect(err).toStrictEqual(Error('test'));
     }
 
     lambdaHandler(proxyRequest, {}, callback);
+  })
+  
+  it('returns undefined if callback is set', () => {
+    const router = Router()
+    router.use(bodyParser.json())
+    router.use((req, res) => {
+      res.send('foo bar')
+    })
+    const callback = (err, payload) => {
+      expect(payload.body).toEqual('foo bar');
+    }
+    const lambdaHandler = ApiGatewayHandler(router);
+    const result = lambdaHandler(proxyRequest, {}, callback)
+    expect(result).toBe(undefined)
+  })
+
+  it('returns promise if callback is undefined', () => {
+    const router = Router()
+    router.use(bodyParser.json())
+    router.use((req, res) => {
+      res.send('foo bar')
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
+    const promise = lambdaHandler(proxyRequest, {})
+    // check if handler returns a valid promise
+    // https://stackoverflow.com/a/38339199
+    expect(Promise.resolve(promise) === promise).toBe(true)
+    promise.then(payload => {
+      expect(payload.body).toEqual('foo bar');
+    })
   })
 });
