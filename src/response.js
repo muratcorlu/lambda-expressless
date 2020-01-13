@@ -6,11 +6,9 @@ class Response {
    * Response object constructor
    *
    * @param {Request} req Request object for this Response
-   * @param {function} callback AWS Lambda callback function
    */
-  constructor(req, callback) {
+  constructor(req) {
     this.req = req;
-    this.callback = callback;
     this.responseObj = {
       statusCode: 200,
       headers: {},
