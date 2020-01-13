@@ -17,5 +17,9 @@ exports.use = (...handlers) => {
         return handler(request, response, resolve);
       })
     ).catch(callback), Promise.resolve());
+
+    // Set response to Lambda.
+    // This will cause Lambda to freeze and should be executed last
+    callback(response.responseObj)
   }
 }

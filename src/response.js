@@ -18,11 +18,16 @@ class Response {
     };
   }
 
+  writableEnded: false
+
   /**
    * Ends the response process.
    */
   end() {
-    this.callback(null, this.responseObj);
+    // End must not be called twice to ensure compatibility with writable streams. 
+    // https://nodejs.org/api/stream.html#stream_writable_writableended
+    if (this.writableEnded) throw new Error('write after end')
+    this.writableEnded = true
   }
 
   /**
