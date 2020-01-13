@@ -6,13 +6,13 @@ exports.use = (router) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const req = new Request(event);
-    const response = new Response(request);
-    request.res = response;
+    const res = new Response(request);
+    req.res = res;
 
-    router.handle(request, res, () => {
+    router.handle(req, res, () => {
       // Set response to Lambda.
       // This will cause Lambda to freeze and should be executed last
-      callback(response.responseObj)
+      callback(res.responseObj)
     })
   }
 }
