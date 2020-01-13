@@ -6,10 +6,10 @@ exports.apiGatewayHandler = (router) => {
     return new Promise((resolve) => {
 
       const req = new Request(event);
-      const res = new Response(request);
+      const res = new Response(req);
       req.res = res;
   
-      router.handle(req, res, () => {
+      router(req, res, (req, res) => {
         resolve(res.responseObj)
       })
     })
