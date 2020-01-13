@@ -10,8 +10,6 @@ exports.apiGatewayHandler = (router) => {
       req.res = res;
   
       router.handle(req, res, () => {
-        // Set response to Lambda.
-        // This will cause Lambda to freeze and should be executed last
         resolve(res.responseObj)
       })
     })
