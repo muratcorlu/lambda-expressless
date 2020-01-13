@@ -2,7 +2,7 @@ const { Response } = require('./response');
 const { Request } = require('./request');
 
 exports.apiGatewayHandler = (router) => {
-  return handleApiGatewayEvent(event, context) => {
+  return (event, context) => {
     return new Promise((resolve) => {
 
       const req = new Request(event);

@@ -28,6 +28,7 @@ class Request extends ReadableStream {
     }, {});
 
     this.path = event.path;
+    this.url = this.hostname + '/' + event.path;
     this.params = event.pathParameters;
 
     if (!this.get('Content-Length') && 'body' in event && event.body !== null) {
