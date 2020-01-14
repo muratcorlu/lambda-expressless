@@ -1,4 +1,5 @@
-const { use } = require('./lambda-wrapper');
+const { ApiGatewayHandler } = require('./lambda-wrapper');
+const Router = require('router');
 const bodyParser = require('body-parser');
 
 describe('Lambda Wrapper', () => {
@@ -19,10 +20,11 @@ describe('Lambda Wrapper', () => {
 
   it('should send json output properly', async () => {
 
-    const lambdaHandler = use((req, res) => {
+    const router = Router()
+    router.use((req, res) => {
       res.json({a: 1});
-    });
-
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
     const proxyRequest = {
       body: '',
       headers: {},
@@ -37,30 +39,29 @@ describe('Lambda Wrapper', () => {
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: '{"a":1}'
-      });
-    };
+    const result = await lambdaHandler(proxyRequest, {})
 
-    await lambdaHandler(proxyRequest, {}, callback);
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"a":1}'
+    });
 
   });
 
 
-  it('should handle json body on a post request', () => {
+  it('should handle json body on a post request', async () => {
 
-    const lambdaHandler = use(bodyParser.json(), (req, res) => {
+    const router = Router()
+    router.use(bodyParser.json())
+    router.use((req, res) => {
       res.json(req.body);
-    });
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
     const requestObject = JSON.stringify({a: 1});
-
     const proxyRequest = {
       body: requestObject,
       headers: {
@@ -81,28 +82,28 @@ describe('Lambda Wrapper', () => {
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: requestObject
-      });
-    }
 
-    lambdaHandler(proxyRequest, {}, callback);
+    const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: requestObject
+    });
 
   });
 
-  it('should run multiple middlewares', () => {
-    const lambdaHandler = use((req, res, next) => {
-      req.params.fromFirstEndpoint = '1';
+  it('should run multiple middlewares', async () => {
+    const router = Router()
+    router.use((req, res, next) => {
+      req.fromFirstEndpoint = '1';
       next();
-    }, (req, res) => {
-      res.json({b: req.params.fromFirstEndpoint});
-    });
+    })
+    router.use((req, res) => {
+      res.json({b: req.fromFirstEndpoint});
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
     const callback = (err, payload) => {
       expect(err).toBe(null);
@@ -113,51 +114,114 @@ describe('Lambda Wrapper', () => {
         },
         body: JSON.stringify({"b":"1"})
       });
+      done();
     }
 
     lambdaHandler(proxyRequest, {}, callback);
   });
 
-  it('should run multiple middlewares as arrays', () => {
-    const lambdaHandler = use([(req, res, next) => {
-      req.params.fromFirstEndpoint = '1';
-      next();
-    }, (req, res, next) => {
-      req.params.fromSecondEndpoint = '1';
-      next();
-    }], (req, res) => {
-      res.json({
-        fromFirstEndpoint: req.params.fromFirstEndpoint,
-        fromSecondEndpoint: req.params.fromSecondEndpoint,
-      })
-    });
+  it('should handle errors', async () => {
+    expect.assertions(2);
 
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          fromFirstEndpoint: '1',
-          fromSecondEndpoint: '1',
-        })
-      });
-    }
-
-    lambdaHandler(proxyRequest, {}, callback);
-  });
-
-  it('should handle errors', () => {
-    const lambdaHandler = use((req, res, next) => {
+    const router = Router()
+    router.use((req, res, next) => {
       throw Error('test');
-    });
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
 
-    const callback = (err, payload) => {
-      expect(err).toStrictEqual(Error('test'));
+    try{
+      await lambdaHandler(proxyRequest, {})
+    } catch (err) {
+      expect(err).toEqual(Error('test'));
     }
 
-    lambdaHandler(proxyRequest, {}, callback);
+    await lambdaHandler(proxyRequest, {}).catch(err => {
+      expect(err).toEqual(Error('test'));
+    })
   })
+  
+  it('GET with path', async () => {
+    const router = Router()
+    router.get('/*', (req, res, next) => {
+      req.fromFirstEndpoint = 1;
+      next();
+    });
+    router.get('/path', (req, res) => {
+      res.json({a: req.fromFirstEndpoint, b: 2});
+    });
+
+    const lambdaHandler = ApiGatewayHandler(router);
+    const proxyRequest = {
+      body: '',
+      headers: {},
+      multiValueHeaders: {},
+      httpMethod: 'GET',
+      isBase64Encoded: false,
+      path: '/path',
+      pathParameters: { },
+      queryStringParameters: { },
+      multiValueQueryStringParameters: { },
+      stageVariables: { },
+      requestContext: {},
+      resource: ''
+    };
+
+    const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"a":1,"b":2}'
+    });
+
+  });
+
+  it('POST matching only post handler', async () => {
+    const router = Router()
+    router.get('/', (req, res, next) => {
+      req.params.a = 1;
+      next();
+    });
+    router.post('/path', (req, res) => {
+      res.json({a: req.params.a, b: 2});
+    });
+
+    const lambdaHandler = ApiGatewayHandler(router);
+
+    const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"b":2}'
+    });
+
+  });
+
+  // it('ERROR handling', async (done) => {
+  //   const router = Router()
+
+  //   router.post('/', (req, res, next) => {
+  //     next('Test error');
+  //   });
+
+  //   const lambdaHandler = ApiGatewayHandler(router);
+
+  //   const callback = (err, payload) => {
+  //     expect(err).toBe(null);
+  //     expect(payload).toEqual({
+  //       statusCode: 500,
+  //       headers: {
+  //         'content-type': 'application/json'
+  //       },
+  //       body: '{"error":"Test error"}'
+  //     });
+  //     done();
+  //   };
+
+  //   await lambdaHandler(proxyRequest, {}, callback);
+
+  // });
 });

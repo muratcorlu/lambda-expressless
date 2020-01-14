@@ -22,6 +22,7 @@
   "devDependencies": {
     "body-parser": "^1.19.0",
     "jest": "^24.9.0",
+    "router": "^1.3.3",
     "semantic-release": "^15.13.21"
   },
   "dependencies": {

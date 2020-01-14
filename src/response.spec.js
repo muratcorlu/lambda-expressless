@@ -2,92 +2,79 @@ const { Response } = require('./response');
 const { Request } = require('./request');
 
 describe('Response object', () => {
-  it('set response status properly', () => {
-    const cb = jest.fn();
-
-    const response = new Response(null, cb);
-
-    response.status(404);
-    response.end();
-
-    expect(cb).toHaveBeenCalledWith(null, {
-      statusCode: 404,
-      headers: {},
-      body: ''
+  it('set response status properly', done => {
+    const res = new Response(null, out => {
+      expect(out).toEqual({
+        statusCode: 404,
+        headers: {},
+        body: ''
+      });
+      done()
     });
+    res.status(404);
+    res.end();
   });
 
-  it('send body properly', () => {
-    const cb = (err, response) => {
-      expect(response.body).toBe('hello');
-    };
-
-    const response = new Response(null, cb);
-
-    response.send('hello');
+  it('send body properly', done => {
+    const res = new Response(null, out => {
+      expect(out.body).toBe('hello');
+      done()
+    });
+    res.send('hello');
   });
 
-  it('set content-type', () => {
-    const cb = (err, response) => {
-      expect(response.headers).toBe({
+  it('set content-type', done => {
+    const res = new Response(null, out => {
+      expect(out.headers).toEqual({
         'content-type': 'text/html'
       });
-    };
-    const response = new Response(null, cb);
-
-    response.type('text/html');
-
+      done()
+    });
+    res.type('text/html');
+    res.send()
   });
 
 
-  it('get header', () => {
-    const cb = (err, response) => {};
-
-    const response = new Response(null, cb);
-
-    response.set('X-Header', 'a');
-
-    expect(response.get('X-Header')).toBe('a');
+  it('get header', done => {
+    const res = new Response(null, out => {
+      done()
+    });
+    res.set('X-Header', 'a');
+    expect(res.get('X-Header')).toBe('a');
     // Should work case insensitive
-    expect(response.get('x-Header')).toBe('a');
+    expect(res.get('x-Header')).toBe('a');
+    res.end()
   });
 
-  it('can chain status method', () => {
-    const cb = (err, response) => {
-      expect(response.statusCode).toBe(201);
-    };
-
-    const response = new Response(null, cb);
-
-    response.status(201).end();
+  it('can chain status method', done => {
+    const res = new Response(null, out => {
+      expect(out.statusCode).toBe(201);
+      expect(res.statusCode).toBe(201);
+      done()
+    });
+    res.status(201).end();
   });
 
-  it('can chain set method', () => {
-    const cb = (err, response) => {
-      expect(response.headers).toEqual({
-        'x-header': 'a'
-      });
-    };
-
-    const response = new Response(null, cb);
-
-    response.set('x-header', 'a').end();
+  it('can chain set method', done => {
+    const res = new Response(null, out => {
+      expect(out.headers).toEqual({ 'x-header': 'a' });
+      done()
+    });
+    res.set('x-header', 'a').end();
   });
 
-  it('can chain type method', () => {
-    const cb = (err, response) => {
-      expect(response.headers).toEqual({
+  it('can chain type method', done => {
+    const response = new Response(null, out => {
+      expect(out.headers).toEqual({
         'content-type': 'text/xml'
       });
-    };
-
-    const response = new Response(null, cb);
-
+      done()
+    });
     response.type('text/xml').end();
   });
 
   describe('should send correct response via accept header', () => {
-    it('with regular header', () => {
+    it('with regular header', done => {
 
       const event = {
         headers: {
@@ -113,16 +100,13 @@ describe('Response object', () => {
       req.next = (error) => {
 
       };
-
-      const cb = (err, response) => {
-        expect(response.statusCode).toBe(200);
-        expect(response.headers['content-type']).toBe('text/xml');
-        expect(response.body).toBe('<xml/>');
-      };
-
-      const response = new Response(req, cb);
-
-      response.format({
+      const res = new Response(req, out => {
+        expect(out.statusCode).toBe(200);
+        expect(out.headers['content-type']).toBe('text/xml');
+        expect(out.body).toBe('<xml/>');
+        done()
+      });
+      res.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
         },
@@ -132,7 +116,7 @@ describe('Response object', () => {
       });
     });
 
-    it('without regular header', () => {
+    it('without regular header', done => {
 
       const event = {
         headers: {
@@ -158,16 +142,14 @@ describe('Response object', () => {
       req.next = (error) => {
 
       };
-
-      const cb = (err, response) => {
-        expect(response.statusCode).toBe(200);
-        expect(response.headers['content-type']).toBe('text/html');
-        expect(response.body).toBe('<p>hi</p>');
-      };
-
-      const response = new Response(req, cb);
-
-      response.format({
+      
+      const res = new Response(req, out => {
+        expect(out.statusCode).toBe(200);
+        expect(out.headers['content-type']).toBe('text/html');
+        expect(out.body).toBe('<p>hi</p>');
+        done()
+      });
+      res.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
         },
@@ -181,7 +163,8 @@ describe('Response object', () => {
     });
 
 
-    it('with non acceptable accept header', () => {
+    it('with non acceptable accept header', done => {
+      expect.assertions(2);
 
       const event = {
         headers: {
@@ -207,14 +190,12 @@ describe('Response object', () => {
       req.next = (error) => {
         expect(error.status).toBe(406);
         expect(error).toEqual(Error('Not Acceptable'));
+        done()
       };
 
-      const cb = (err, response) => {
-      };
-
-      const response = new Response(req, cb);
-
-      response.format({
+      const res = new Response(req, out => {
+      });
+      res.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
         }

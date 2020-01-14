@@ -1,6 +1,7 @@
 const ReadableStream = require('stream').Readable;
 const accepts = require('accepts');
 const typeis = require('type-is');
+const path = require('path')
 
 /**
  *
@@ -17,7 +18,7 @@ class Request extends ReadableStream {
       return headers;
     }, {});
 
-    this.hostname = this.headers.host
+    this.hostname = this.headers.host || '';
     this.method = event.httpMethod;
 
     event.multiValueQueryStringParameters = event.multiValueQueryStringParameters || {};
@@ -27,7 +28,8 @@ class Request extends ReadableStream {
       return queryParams;
     }, {});
 
-    this.path = event.path;
+    this.path = event.path || '';
+    this.url = path.join(this.hostname, event.path);
     this.params = event.pathParameters;
 
     if (!this.get('Content-Length') && 'body' in event && event.body !== null) {
