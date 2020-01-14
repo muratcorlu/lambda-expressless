@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 
 const AWS_RES_BODY = Symbol('body')
 const AWS_RES_HEADERS = Symbol('body')
+const ON_FINISHED = Symbol('body')
 
 /**
  * Response Object
@@ -12,7 +13,7 @@ class Response extends EventEmitter {
    *
    * @param {Request} req Request object for this Response
    */
-  constructor(req) {
+  constructor(req, onFinished) {
     super ()
     this.req = req;
     this.writableEnded = false
@@ -20,14 +21,7 @@ class Response extends EventEmitter {
     // Non-Express compatible props: Use symbols to avoid name clashes
     this[AWS_RES_HEADERS] = {}
     this[AWS_RES_BODY] = ''
-  }
-
-  getApiGatewayResult() {
-    return {
-      statusCode: this.statusCode,
-      headers: this[AWS_RES_HEADERS],
-      body: this[AWS_RES_BODY]
-    }
+    this[ON_FINISHED] = onFinished
   }
 
   /**
@@ -38,8 +32,13 @@ class Response extends EventEmitter {
     // https://nodejs.org/api/stream.html#stream_writable_writableended
     if (this.writableEnded) throw new Error('write after end')
     this.writableEnded = true
-    console.log('end called')
     this.emit('finished')
+    const apiGatewayResult = {
+      statusCode: this.statusCode,
+      headers: this[AWS_RES_HEADERS],
+      body: this[AWS_RES_BODY]
+    }
+    this[ON_FINISHED](apiGatewayResult)
   }
 
   /**

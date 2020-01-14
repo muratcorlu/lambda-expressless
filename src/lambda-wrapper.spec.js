@@ -18,14 +18,13 @@ describe('Lambda Wrapper', () => {
     resource: ''
   };
 
-  it('should send json output properly', async (done) => {
+  it('should send json output properly', async () => {
 
     const router = Router()
     router.use((req, res) => {
       res.json({a: 1});
     })
     const lambdaHandler = ApiGatewayHandler(router);
-
     const proxyRequest = {
       body: '',
       headers: {},
@@ -40,25 +39,20 @@ describe('Lambda Wrapper', () => {
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      console.log('callback called')
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: '{"a":1}'
-      });
-      done()
-    };
+    const result = await lambdaHandler(proxyRequest, {})
 
-    lambdaHandler(proxyRequest, {}, callback);
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"a":1}'
+    });
 
   });
 
 
-  it('should handle json body on a post request', (done) => {
+  it('should handle json body on a post request', async () => {
 
     const router = Router()
     router.use(bodyParser.json())
@@ -68,7 +62,6 @@ describe('Lambda Wrapper', () => {
     const lambdaHandler = ApiGatewayHandler(router);
 
     const requestObject = JSON.stringify({a: 1});
-
     const proxyRequest = {
       body: requestObject,
       headers: {
@@ -89,30 +82,26 @@ describe('Lambda Wrapper', () => {
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: requestObject
-      });
-      done();
-    }
 
-    lambdaHandler(proxyRequest, {}, callback);
+    const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: requestObject
+    });
 
   });
 
-  it('should run multiple middlewares', (done) => {
+  it('should run multiple middlewares', async () => {
     const router = Router()
     router.use((req, res, next) => {
-      req.params.fromFirstEndpoint = '1';
+      req.fromFirstEndpoint = '1';
       next();
     })
     router.use((req, res) => {
-      res.json({b: req.params.fromFirstEndpoint});
+      res.json({b: req.fromFirstEndpoint});
     })
     const lambdaHandler = ApiGatewayHandler(router);
 
@@ -131,65 +120,37 @@ describe('Lambda Wrapper', () => {
     lambdaHandler(proxyRequest, {}, callback);
   });
 
-  it('should handle errors', (done) => {
+  it('should handle errors', async () => {
+    expect.assertions(2);
+
     const router = Router()
     router.use((req, res, next) => {
       throw Error('test');
     })
     const lambdaHandler = ApiGatewayHandler(router);
 
-    const callback = (err, payload) => {
-      expect(err).toStrictEqual(Error('test'));
-      done();
+    try{
+      await lambdaHandler(proxyRequest, {})
+    } catch (err) {
+      expect(err).toEqual(Error('test'));
     }
 
-    lambdaHandler(proxyRequest, {}, callback);
+    await lambdaHandler(proxyRequest, {}).catch(err => {
+      expect(err).toEqual(Error('test'));
+    })
   })
   
-  it('returns undefined if callback is set', () => {
+  it('GET with path', async () => {
     const router = Router()
-    router.use(bodyParser.json())
-    router.use((req, res) => {
-      res.send('foo bar')
-    })
-    const callback = (err, payload) => {
-      expect(payload.body).toEqual('foo bar');
-    }
-    const lambdaHandler = ApiGatewayHandler(router);
-    const result = lambdaHandler(proxyRequest, {}, callback)
-    expect(result).toBe(undefined)
-  })
-
-  it('returns promise if callback is undefined', () => {
-    const router = Router()
-    router.use(bodyParser.json())
-    router.use((req, res) => {
-      res.send('foo bar')
-    })
-    const lambdaHandler = ApiGatewayHandler(router);
-    const promise = lambdaHandler(proxyRequest, {})
-    // check if handler returns a valid promise
-    // https://stackoverflow.com/a/38339199
-    expect(Promise.resolve(promise) === promise).toBe(true)
-    promise.then(payload => {
-      expect(payload.body).toEqual('foo bar');
-    })
-  })
-
-  it('GET with path', async (done) => {
-    const router = Router()
-
-    router.get('/', (req, res, next) => {
-      req.params.a = 1;
+    router.get('/*', (req, res, next) => {
+      req.fromFirstEndpoint = 1;
       next();
     });
-
     router.get('/path', (req, res) => {
-      res.json({a: req.params.a, b: 2});
+      res.json({a: req.fromFirstEndpoint, b: 2});
     });
 
     const lambdaHandler = ApiGatewayHandler(router);
-
     const proxyRequest = {
       body: '',
       headers: {},
@@ -204,49 +165,38 @@ describe('Lambda Wrapper', () => {
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: '{"a":1,"b":2}'
-      });
-      done();
-    };
 
-    await lambdaHandler(proxyRequest, {}, callback);
+    const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"a":1,"b":2}'
+    });
 
   });
 
-  it('POST matching only post handler', async (done) => {
+  it('POST matching only post handler', async () => {
     const router = Router()
-
     router.get('/', (req, res, next) => {
       req.params.a = 1;
       next();
     });
-
     router.post('/path', (req, res) => {
       res.json({a: req.params.a, b: 2});
     });
 
     const lambdaHandler = ApiGatewayHandler(router);
 
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: '{"b":2}'
-      });
-      done();
-    };
-
-    await lambdaHandler(proxyRequest, {}, callback);
+    const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"b":2}'
+    });
 
   });
 

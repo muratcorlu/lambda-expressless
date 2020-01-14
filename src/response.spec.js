@@ -2,65 +2,79 @@ const { Response } = require('./response');
 const { Request } = require('./request');
 
 describe('Response object', () => {
-  it('set response status properly', () => {
-    const response = new Response(null);
-    response.status(404);
-    response.end();
-    expect(response.getApiGatewayResult()).toEqual({
-      statusCode: 404,
-      headers: {},
-      body: ''
+  it('set response status properly', done => {
+    const res = new Response(null, out => {
+      expect(out).toEqual({
+        statusCode: 404,
+        headers: {},
+        body: ''
+      });
+      done()
     });
+    res.status(404);
+    res.end();
   });
 
-  it('send body properly', () => {
-    const response = new Response(null);
-    response.send('hello');
-    expect(response.getApiGatewayResult().body).toBe('hello');
-  });
-
-  it('set content-type', () => {
-    const response = new Response(null);
-    response.type('text/html');
-    expect(response.getApiGatewayResult().headers).toEqual({
-      'content-type': 'text/html'
+  it('send body properly', done => {
+    const res = new Response(null, out => {
+      expect(out.body).toBe('hello');
+      done()
     });
+    res.send('hello');
+  });
+
+  it('set content-type', done => {
+    const res = new Response(null, out => {
+      expect(out.headers).toEqual({
+        'content-type': 'text/html'
+      });
+      done()
+    });
+    res.type('text/html');
+    res.send()
   });
 
 
-  it('get header', () => {
-    const response = new Response(null);
-    response.set('X-Header', 'a');
-    expect(response.get('X-Header')).toBe('a');
+  it('get header', done => {
+    const res = new Response(null, out => {
+      done()
+    });
+    res.set('X-Header', 'a');
+    expect(res.get('X-Header')).toBe('a');
     // Should work case insensitive
-    expect(response.get('x-Header')).toBe('a');
+    expect(res.get('x-Header')).toBe('a');
+    res.end()
   });
 
-  it('can chain status method', () => {
-    const response = new Response(null);
-    response.status(201).end();
-    expect(response.statusCode).toBe(201);
-    expect(response.getApiGatewayResult().statusCode).toBe(201);
-  });
-
-  it('can chain set method', () => {
-    const response = new Response(null);
-    response.set('x-header', 'a').end();
-    expect(response.getApiGatewayResult().headers).toEqual({
-      'x-header': 'a'
+  it('can chain status method', done => {
+    const res = new Response(null, out => {
+      expect(out.statusCode).toBe(201);
+      expect(res.statusCode).toBe(201);
+      done()
     });
+    res.status(201).end();
   });
 
-  it('can chain type method', () => {
-    const response = new Response(null);
+  it('can chain set method', done => {
+    const res = new Response(null, out => {
+      expect(out.headers).toEqual({ 'x-header': 'a' });
+      done()
+    });
+    res.set('x-header', 'a').end();
+  });
+
+  it('can chain type method', done => {
+    const response = new Response(null, out => {
+      expect(out.headers).toEqual({
+        'content-type': 'text/xml'
+      });
+      done()
+    });
     response.type('text/xml').end();
-    expect(response.getApiGatewayResult().headers).toEqual({
-      'content-type': 'text/xml'
-    });
   });
 
   describe('should send correct response via accept header', () => {
-    it('with regular header', () => {
+    it('with regular header', done => {
 
       const event = {
         headers: {
@@ -86,9 +100,13 @@ describe('Response object', () => {
       req.next = (error) => {
 
       };
-
-      const response = new Response(req);
-      response.format({
+      const res = new Response(req, out => {
+        expect(out.statusCode).toBe(200);
+        expect(out.headers['content-type']).toBe('text/xml');
+        expect(out.body).toBe('<xml/>');
+        done()
+      });
+      res.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
         },
@@ -96,14 +114,9 @@ describe('Response object', () => {
           res.send('<xml/>');
         }
       });
-
-      const apiGatewayRes = response.getApiGatewayResult()
-      expect(apiGatewayRes.statusCode).toBe(200);
-      expect(apiGatewayRes.headers['content-type']).toBe('text/xml');
-      expect(apiGatewayRes.body).toBe('<xml/>');
     });
 
-    it('without regular header', () => {
+    it('without regular header', done => {
 
       const event = {
         headers: {
@@ -130,8 +143,13 @@ describe('Response object', () => {
 
       };
       
-      const response = new Response(req);
-      response.format({
+      const res = new Response(req, out => {
+        expect(out.statusCode).toBe(200);
+        expect(out.headers['content-type']).toBe('text/html');
+        expect(out.body).toBe('<p>hi</p>');
+        done()
+      });
+      res.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
         },
@@ -142,15 +160,11 @@ describe('Response object', () => {
           res.type('text/html').send('<p>hi</p>');
         }
       });
-
-      const apiGatewayRes = response.getApiGatewayResult()
-      expect(apiGatewayRes.statusCode).toBe(200);
-      expect(apiGatewayRes.headers['content-type']).toBe('text/html');
-      expect(apiGatewayRes.body).toBe('<p>hi</p>');
     });
 
 
-    it('with non acceptable accept header', () => {
+    it('with non acceptable accept header', done => {
+      expect.assertions(2);
 
       const event = {
         headers: {
@@ -176,11 +190,12 @@ describe('Response object', () => {
       req.next = (error) => {
         expect(error.status).toBe(406);
         expect(error).toEqual(Error('Not Acceptable'));
+        done()
       };
 
-      const response = new Response(req);
-
-      response.format({
+      const res = new Response(req, out => {
+      });
+      res.format({
         'application/json': (req, res, next) => {
           res.json({a: 1});
         }
