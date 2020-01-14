@@ -1,16 +1,19 @@
+const EventEmitter = require('events');
+
 const AWS_RES_BODY = Symbol('body')
 const AWS_RES_HEADERS = Symbol('body')
 
 /**
  * Response Object
  */
-class Response {
+class Response extends EventEmitter {
   /**
    * Response object constructor
    *
    * @param {Request} req Request object for this Response
    */
   constructor(req) {
+    super ()
     this.req = req;
     this.writableEnded = false
     this.statusCode = 200
@@ -35,6 +38,8 @@ class Response {
     // https://nodejs.org/api/stream.html#stream_writable_writableended
     if (this.writableEnded) throw new Error('write after end')
     this.writableEnded = true
+    console.log('end called')
+    this.emit('finished')
   }
 
   /**

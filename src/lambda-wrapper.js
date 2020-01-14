@@ -20,18 +20,37 @@ exports.ApiGatewayHandler = (router) => {
    * @return {undefined|promise} Returns undefined if callback param is set. Return a promise if callback param is undefined.
    */
   return function handleApiGatewayEvent(event, context, callback) {
-    const promise = new Promise((resolve, reject) => {
-      context.callbackWaitsForEmptyEventLoop = false
-      const req = new Request(event);
-      const res = new Response(req);
-      req.res = res;
-      router(req, res, (err) => {
-        const apiGatewayResult = res.getApiGatewayResult()
-        if (callback) callback(err, apiGatewayResult)
-        else if (err) reject(err) 
-        else resolve(apiGatewayResult)
+    
+    const req = new Request(event);
+    const res = new Response(req);
+    req.res = res;
+    
+    const onResFinished = new Promise(resolve => {
+      res.on('finished', () => {
+        console.log('finished')
+        resolve (res.getApiGatewayResult())
       })
     })
-    return callback ? undefined : promise
+
+    router(req, res, (err) => {
+      console.log('router callback', err)
+      if (err) {
+        res.status(500).send(err)
+      } else {
+        res.status(404).send('Not found')
+      }
+    })
+    
+    if (callback) {
+      onResFinished.then(apiGatewayResult => {
+        context.callbackWaitsForEmptyEventLoop = false
+        callback (null, apiGatewayResult)
+      }).catch(err => {
+        callback (err, null)
+      })
+      return undefined
+    } else {
+      return onResFinished
+    }
   }
 }

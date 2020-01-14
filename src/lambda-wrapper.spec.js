@@ -41,6 +41,7 @@ describe('Lambda Wrapper', () => {
       resource: ''
     };
     const callback = (err, payload) => {
+      console.log('callback called')
       expect(err).toBe(null);
       expect(payload).toEqual({
         statusCode: 200,
