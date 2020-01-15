@@ -195,13 +195,15 @@ describe('Lambda Wrapper', () => {
   });
 
   it('POST matching only post handler', async () => {
+    expect.assertions(1)
     const router = Router()
-    router.get('/', (req, res, next) => {
-      req.params.a = 1;
+    router.get('/path', (req, res, next) => {
+      req.foo = 1;
       next();
     });
+    
     router.post('/path', (req, res) => {
-      res.json({a: req.params.a, b: 2});
+      res.json({a: req.foo, b: 2});
     });
 
     const lambdaHandler = ApiGatewayHandler(router);
@@ -217,28 +219,4 @@ describe('Lambda Wrapper', () => {
 
   });
 
-  // it('ERROR handling', async (done) => {
-  //   const router = Router()
-
-  //   router.post('/', (req, res, next) => {
-  //     next('Test error');
-  //   });
-
-  //   const lambdaHandler = ApiGatewayHandler(router);
-
-  //   const callback = (err, payload) => {
-  //     expect(err).toBe(null);
-  //     expect(payload).toEqual({
-  //       statusCode: 500,
-  //       headers: {
-  //         'content-type': 'application/json'
-  //       },
-  //       body: '{"error":"Test error"}'
-  //     });
-  //     done();
-  //   };
-
-  //   await lambdaHandler(proxyRequest, {}, callback);
-
-  // });
 });
