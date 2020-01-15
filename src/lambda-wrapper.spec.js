@@ -137,6 +137,26 @@ describe('Lambda Wrapper', () => {
     })
   })
   
+  it('should handle next(error)', async () => {
+    expect.assertions(2);
+
+    const router = Router()
+    router.use((req, res, next) => {
+      next('test');
+    })
+    const lambdaHandler = ApiGatewayHandler(router);
+
+    try{
+      await lambdaHandler(proxyRequest, {})
+    } catch (err) {
+      expect(err).toEqual('test');
+    }
+
+    await lambdaHandler(proxyRequest, {}).catch(err => {
+      expect(err).toEqual('test');
+    })
+  })
+
   it('GET with path', async () => {
     const router = Router()
     router.get('/*', (req, res, next) => {
