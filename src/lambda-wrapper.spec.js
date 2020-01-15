@@ -95,6 +95,7 @@ describe('Lambda Wrapper', () => {
   });
 
   it('should run multiple middlewares', async () => {
+    expect.assertions (1)
     const router = Router()
     router.use((req, res, next) => {
       req.fromFirstEndpoint = '1';
@@ -105,19 +106,15 @@ describe('Lambda Wrapper', () => {
     })
     const lambdaHandler = ApiGatewayHandler(router);
 
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({"b":"1"})
-      });
-      done();
-    }
+    const result = await lambdaHandler(proxyRequest, {});
 
-    lambdaHandler(proxyRequest, {}, callback);
+    expect (result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({"b":"1"})
+    })
   });
 
   it('should handle errors', async () => {
