@@ -9,7 +9,12 @@ class Request extends ReadableStream {
   constructor(event) {
     super();
 
-    event.multiValueHeaders = event.multiValueHeaders || {};
+    if (!event.multiValueHeaders) {
+      event.multiValueHeaders = {}
+      for (const header in event.headers) {
+        event.multiValueHeaders[header] = [event.headers[header]]
+      }
+    }
 
     this.headers = Object.keys(event.multiValueHeaders).reduce((headers, key) => {
       const value = event.multiValueHeaders[key];
@@ -20,7 +25,13 @@ class Request extends ReadableStream {
     this.hostname = this.headers.host || '';
     this.method = event.httpMethod;
 
-    event.multiValueQueryStringParameters = event.multiValueQueryStringParameters || {};
+    if (!event.multiValueQueryStringParameters) {
+      event.multiValueQueryStringParameters = {}
+      for (const queryParam in event.queryStringParameters) {
+        event.multiValueQueryStringParameters[queryParam] = [event.queryStringParameters[queryParam]]
+      }
+    }
+
     this.query = Object.keys(event.multiValueQueryStringParameters).reduce((queryParams, key) => {
       const value = event.multiValueQueryStringParameters[key];
       queryParams[key] = value.length > 1 ? value : value[0];

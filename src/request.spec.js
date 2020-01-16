@@ -62,6 +62,7 @@ describe('Request object', () => {
 
   it('should read query as empty object if there is no queryparamters', () => {
     delete event.multiValueQueryStringParameters;
+    event.queryStringParameters = {}
     const request = new Request(event);
 
     expect(request.query).toEqual({});
@@ -69,6 +70,7 @@ describe('Request object', () => {
 
   it('should read headers as empty object if there is no headers', () => {
     delete event.multiValueHeaders;
+    event.headers = {}
     delete event.body;
     const request = new Request(event);
 
