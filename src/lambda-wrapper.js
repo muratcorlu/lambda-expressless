@@ -20,25 +20,27 @@ exports.ApiGatewayHandler = (router, finalHandler) => {
    */
   return handleApiGatewayEvent = (event, context) => {
     return new Promise((resolve, reject) => {
+      try {
+        const req = new Request(event);
+        const res = req.res = new Response(req, out => {
+          resolve(finalHandler(null, out, req, res))
+        });
 
-      const req = new Request(event);
-      const res = req.res = new Response(req, out => {
-        resolve(finalHandler(null, out, req, res))
-      });
-
-      // run middleware managed by router
-      router(req, res, async err => {
-        if (err) {
-          // unexpected errors should be handled by final handler
-          resolve(finalHandler(err, null, req, res))
-        } else if (res.writableEnded) {
-          console.error('ERROR: next() should not be used after res.send() within routing middleware');
-        } else {
-          // expected error
-          res.status(404).send('Not found');
-        }
-      })
-
+        // run middleware managed by router
+        router(req, res, async err => {
+          if (err) {
+            // unexpected errors should be handled by final handler
+            resolve(finalHandler(err, null, req, res))
+          } else if (res.writableEnded) {
+            console.error('ERROR: next() should not be used after res.send() within routing middleware');
+          } else {
+            // expected error
+            res.status(404).send('Not found');
+          }
+        })
+      } catch (error) {
+        resolve(finalHandler(error, null, null, null))
+      }
     })    
   }
 }
