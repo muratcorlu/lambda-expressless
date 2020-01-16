@@ -2,6 +2,10 @@ const { ApiGatewayHandler } = require('./lambda-wrapper');
 const Router = require('router');
 const bodyParser = require('body-parser');
 
+function finalHandlerPassTrough (err, out, req, res) {
+  return out
+}
+
 describe('Lambda Wrapper', () => {
   const proxyRequest = {
     body: null,
@@ -24,7 +28,7 @@ describe('Lambda Wrapper', () => {
     router.use((req, res) => {
       res.json({a: 1});
     })
-    const lambdaHandler = ApiGatewayHandler(router);
+    const lambdaHandler = ApiGatewayHandler(router, finalHandlerPassTrough);
     const proxyRequest = {
       body: '',
       headers: {},
@@ -59,7 +63,7 @@ describe('Lambda Wrapper', () => {
     router.use((req, res) => {
       res.json(req.body);
     })
-    const lambdaHandler = ApiGatewayHandler(router);
+    const lambdaHandler = ApiGatewayHandler(router, finalHandlerPassTrough);
 
     const requestObject = JSON.stringify({a: 1});
     const proxyRequest = {
@@ -104,7 +108,7 @@ describe('Lambda Wrapper', () => {
     router.use((req, res) => {
       res.json({b: req.fromFirstEndpoint});
     })
-    const lambdaHandler = ApiGatewayHandler(router);
+    const lambdaHandler = ApiGatewayHandler(router, finalHandlerPassTrough);
 
     const result = await lambdaHandler(proxyRequest, {});
 
@@ -118,43 +122,32 @@ describe('Lambda Wrapper', () => {
   });
 
   it('should handle errors', async () => {
-    expect.assertions(2);
+    expect.assertions(1);
 
     const router = Router()
     router.use((req, res, next) => {
       throw Error('test');
     })
-    const lambdaHandler = ApiGatewayHandler(router);
 
-    try{
-      await lambdaHandler(proxyRequest, {})
-    } catch (err) {
-      expect(err).toEqual(Error('test'));
-    }
-
-    await lambdaHandler(proxyRequest, {}).catch(err => {
+    const lambdaHandler2 = ApiGatewayHandler(router, err => {
+      console.log('OK2')
       expect(err).toEqual(Error('test'));
     })
+    await lambdaHandler2(proxyRequest, {})
   })
   
   it('should handle next(error)', async () => {
-    expect.assertions(2);
+    expect.assertions(1);
 
     const router = Router()
     router.use((req, res, next) => {
       next('test');
     })
-    const lambdaHandler = ApiGatewayHandler(router);
-
-    try{
-      await lambdaHandler(proxyRequest, {})
-    } catch (err) {
+    const lambdaHandler = ApiGatewayHandler(router, err => {
       expect(err).toEqual('test');
-    }
+    });
+    await lambdaHandler(proxyRequest, {})
 
-    await lambdaHandler(proxyRequest, {}).catch(err => {
-      expect(err).toEqual('test');
-    })
   })
 
   it('GET with path', async () => {
@@ -168,7 +161,7 @@ describe('Lambda Wrapper', () => {
       res.json({a: req.fromFirstEndpoint, b: 2});
     });
 
-    const lambdaHandler = ApiGatewayHandler(router);
+    const lambdaHandler = ApiGatewayHandler(router, finalHandlerPassTrough);
     const proxyRequest = {
       body: '',
       headers: {},
@@ -207,7 +200,7 @@ describe('Lambda Wrapper', () => {
       res.json({a: req.foo, b: 2});
     });
 
-    const lambdaHandler = ApiGatewayHandler(router);
+    const lambdaHandler = ApiGatewayHandler(router, finalHandlerPassTrough);
 
     const result = await lambdaHandler(proxyRequest, {});
     expect(result).toEqual({
@@ -231,7 +224,7 @@ describe('Lambda Wrapper', () => {
     const router = Router()
     router.use('/testing', subRouter)
 
-    const lambdaHandler = ApiGatewayHandler(router);
+    const lambdaHandler = ApiGatewayHandler(router, finalHandlerPassTrough);
 
     let request = {}
     Object.assign(request, proxyRequest)
