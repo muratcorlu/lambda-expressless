@@ -5,12 +5,12 @@ const { Request } = require('./request');
  * API Gateway handler generator for Lambda
  *
  * @param {object} router Express compatible router instance
- * @param {function} finalHandler Process response before sending it. Function params: err, out, req, res
+ * @param {function} onFinished Last callback before output gets send. Function params: out, req, res
  * @return {function} Lambda handler for API gateway events
  * @public
  */
 
-exports.ApiGatewayHandler = (router, finalHandler) => {
+exports.ApiGatewayHandler = (router, onFinished) => {
   /**
    * Lambda Handler for API Gateway invocations
    *
@@ -19,28 +19,28 @@ exports.ApiGatewayHandler = (router, finalHandler) => {
    * @return {promise} Returns undefined if callback param is set. Return a promise if callback param is undefined.
    */
   return handleApiGatewayEvent = (event, context) => {
-    return new Promise((resolve, reject) => {
-      try {
-        const req = new Request(event);
-        const res = req.res = new Response(req, out => {
-          resolve(finalHandler(null, out, req, res))
-        });
-
-        // run middleware managed by router
-        router(req, res, async err => {
-          if (err) {
-            // unexpected errors should be handled by final handler
-            resolve(finalHandler(err, null, req, res))
-          } else if (res.writableEnded) {
-            console.error('ERROR: next() should not be used after res.send() within routing middleware');
-          } else {
-            // expected error
-            res.status(404).send('Not found');
-          }
-        })
-      } catch (error) {
-        resolve(finalHandler(error, null, null, null))
-      }
+    return new Promise(resolve => {
+      const req = new Request(event);
+      const res = req.res = new Response(req, async out => {
+        // run and wait for onFinished callback
+        if (onFinished) try {
+          out = await onFinished(out, req, res)
+        } catch (err) {
+          console.error('Error in onFinished callback: ', err)
+        }
+        // resolve promise even if onFinished callback errors out
+        resolve(out)
+      });
+      router(req, res, err => { 
+        // handle generic routing errors
+        // use error handling middleware for more granular control
+        if (err) {
+          console.error('ERROR: ', err)
+          res.status(500).send('Server error')
+        } else {
+          res.status(404).send('Not found');
+        }
+      })
     })    
   }
 }
