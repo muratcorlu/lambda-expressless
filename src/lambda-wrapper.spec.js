@@ -158,6 +158,7 @@ describe('Lambda Wrapper', () => {
   })
 
   it('GET with path', async () => {
+    expect.assertions(1)
     const router = Router()
     router.get('/*', (req, res, next) => {
       req.fromFirstEndpoint = 1;
@@ -201,7 +202,7 @@ describe('Lambda Wrapper', () => {
       req.foo = 1;
       next();
     });
-    
+
     router.post('/path', (req, res) => {
       res.json({a: req.foo, b: 2});
     });
@@ -209,6 +210,33 @@ describe('Lambda Wrapper', () => {
     const lambdaHandler = ApiGatewayHandler(router);
 
     const result = await lambdaHandler(proxyRequest, {});
+    expect(result).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"b":2}'
+    });
+
+  });
+
+  it('Router cascade', async () => {
+    expect.assertions(1)
+    const subRouter = Router()
+    
+    subRouter.post('/path', (req, res) => {
+      res.json({b: 2});
+    });
+
+    const router = Router()
+    router.use('/testing', subRouter)
+
+    const lambdaHandler = ApiGatewayHandler(router);
+
+    let request = {}
+    Object.assign(request, proxyRequest)
+    request.path = '/testing/path'
+    const result = await lambdaHandler(request, {});
     expect(result).toEqual({
       statusCode: 200,
       headers: {
