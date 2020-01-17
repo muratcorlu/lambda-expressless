@@ -31,7 +31,7 @@ exports.ApiGatewayHandler = (router, onFinished) => {
         // resolve promise even if onFinished callback errors out
         resolve(out)
       });
-      router(req, res, err => { 
+      router(req, res, (err) => {
         // handle generic routing errors
         // use error handling middleware for more granular control
         if (err) {
