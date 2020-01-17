@@ -34,7 +34,7 @@ class Response extends EventEmitter {
     this.writableEnded = true
     this.emit('finished')
     const body = this[AWS_RES_BODY]
-    const bodyStr = body === 'string' ? body : JSON.stringify(body)
+    const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
     const apiGatewayResult = {
       statusCode: this.statusCode,
       headers: this[AWS_RES_HEADERS],
