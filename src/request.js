@@ -50,6 +50,8 @@ class Request extends ReadableStream {
     this.secure = this.protocol === 'https';
     this.ips = (this.get('X-Forwarded-For') || '').split(', ');
     this.ip = this.ips[0];
+    // Alternative way to obtain the source IP
+    // this.ip = event.requestContext.identity.sourceIp
     this.host = this.get('X-Forwarded-Host') || this.hostname;
     this.xhr = (this.get('X-Requested-With') || '').toLowerCase() === 'xmlhttprequest';
 
