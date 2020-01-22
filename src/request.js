@@ -42,7 +42,7 @@ class Request extends ReadableStream {
     this.url = event.path;
     this.params = event.pathParameters;
 
-    if (!this.get('Content-Length') && 'body' in event && event.body !== null) {
+    if (!this.get('Content-Length') && event.body) {
       this.headers['content-length'] = event.body.length;
     }
 
