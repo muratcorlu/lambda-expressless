@@ -46,6 +46,31 @@ describe('Response object', () => {
     res.end()
   });
 
+  it('set cookies', done => {
+    const res = new Response(null, out => {
+      expect(out.multiValueHeaders).toEqual({
+        'Set-Cookie': [
+          'foo=1234; Path=/', 
+          'bar=5678; Path=/docs',
+          'foo2=1234; Domain=example.com; Path=/',
+          'foo3=1234; Expires=Fri, 25 Sep 2020 22:00:00 GMT; Path=/',
+          'foo4=1234; Max-Age=456879; Path=/',
+          'foo5=1234; Secure; SameSite=None; Path=/',
+          'foo6=1234; HttpOnly; Path=/'
+        ]
+      })
+      done()
+    });
+    res.cookie('foo', '1234');
+    res.cookie('bar', '5678', {path: '/docs'})
+    res.cookie('foo2', '1234', {domain: 'example.com'})
+    res.cookie('foo3', '1234', {expires: new Date(2020, 8, 26)})
+    res.cookie('foo4', '1234', {maxAge: 456879})
+    res.cookie('foo5', '1234', {secure: true, sameSite: 'None'})
+    res.cookie('foo6', '1234', {httpOnly: true})
+    res.end()
+  });
+
   it('can chain status method', done => {
     const res = new Response(null, out => {
       expect(out.statusCode).toBe(201);

@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 
 const AWS_RES_BODY = Symbol('body')
 const AWS_RES_HEADERS = Symbol('body')
+const AWS_RES_MULTI_VALUE_HEADERS = Symbol('body')
 const ON_FINISHED = Symbol('body')
 
 /**
@@ -20,6 +21,7 @@ class Response extends EventEmitter {
     this.statusCode = 200
     // Non-Express compatible props: Use symbols to avoid name clashes
     this[AWS_RES_HEADERS] = {}
+    this[AWS_RES_MULTI_VALUE_HEADERS] = undefined
     this[AWS_RES_BODY] = ''
     this[ON_FINISHED] = onFinished
   }
@@ -40,6 +42,7 @@ class Response extends EventEmitter {
       headers: this[AWS_RES_HEADERS],
       body: bodyStr
     }
+    if (this[AWS_RES_MULTI_VALUE_HEADERS]) apiGatewayResult.multiValueHeaders = this[AWS_RES_MULTI_VALUE_HEADERS]
     this[ON_FINISHED](apiGatewayResult)
   }
 
@@ -149,6 +152,58 @@ class Response extends EventEmitter {
    */
   set(key, value) {
     this[AWS_RES_HEADERS][key.toLowerCase()] = value;
+    return this;
+  }
+
+  /**
+   * Set cookie
+   *
+   * @param {string} key Cookie name
+   * @param {string} value Cookie value
+   * @param {{domain: string, expires: Date, maxAge: number, path: string, sameSite: string, httpOnly:boolean, secure: boolean}} options
+   */
+  cookie(key, value, options={}) {
+    if (! options['path']) {
+      options['path'] = '/'
+    }
+    let cookieStr = `${key}=${value}`;
+    for (const optKey in options) {
+      switch (optKey.toLocaleLowerCase()) {
+        case 'domain':
+          cookieStr += `; Domain=${options[optKey]}`
+          break
+        case 'expires':
+          cookieStr += `; Expires=${options[optKey].toUTCString()}`
+          break
+        case 'maxage':
+          cookieStr += `; Max-Age=${options[optKey]}`
+          break
+        case 'path':
+          cookieStr += `; Path=${options[optKey]}`
+          break
+        case 'samesite':
+          cookieStr += `; SameSite=${options[optKey]}`
+          break
+        case 'httponly':
+          if (options[optKey]) {
+            cookieStr += '; HttpOnly'
+          }
+          break
+        case 'secure':
+          if (options[optKey]) {
+            cookieStr += '; Secure'
+          }
+          break
+        default:
+          console.warn (`Warning: Cookie paramterer ${optKey} not supported`)
+      }
+    }
+    if (!this[AWS_RES_MULTI_VALUE_HEADERS]) {
+      this[AWS_RES_MULTI_VALUE_HEADERS] = {'Set-Cookie': [cookieStr]};
+    } else {
+      const cookies = this[AWS_RES_MULTI_VALUE_HEADERS]['Set-Cookie'] || []
+      cookies.push (cookieStr)
+    }
     return this;
   }
 
