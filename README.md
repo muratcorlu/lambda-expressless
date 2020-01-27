@@ -61,7 +61,26 @@ const getUser = (req, res) => {
 exports.handler = use(checkUser, getUser);
 ```
 
-You can use many popular Express Middlewares. Some examples are:
+TypeScript example:
+
+```ts
+import { use, Request, Response } from 'lambda-expressless';
+import * as bodyParser from "body-parser";
+
+const addUser = (req: Request, res: Response, next: Function) => {
+  UserService.add(req.body);
+
+  // add user
+  res.json({success: true});
+};
+
+export const handler = use(
+  bodyParser.json(),
+  addUser
+);
+```
+
+You can use many popular Express Middlewares. Some tested examples are:
 
 - [body-parser](https://github.com/expressjs/body-parser)
 

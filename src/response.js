@@ -8,21 +8,25 @@ class Response {
    * @param {Request} req Request object for this Response
    * @param {function} callback AWS Lambda callback function
    */
-  constructor(req, callback) {
+  constructor(req) {
     this.req = req;
-    this.callback = callback;
+
     this.responseObj = {
       statusCode: 200,
       headers: {},
       body: ''
     };
+
+    this.promise = new Promise((resolve) => {
+      this.resolve = resolve;
+    })
   }
 
   /**
    * Ends the response process.
    */
   end() {
-    this.callback(null, this.responseObj);
+    this.resolve(this.responseObj);
   }
 
   /**
@@ -79,18 +83,16 @@ class Response {
   format(obj) {
     const defaultFn = obj.default;
     const types = Object.keys(obj);
+
     const chosenType = this.req.accepts(types);
 
     if (chosenType) {
       this.type(chosenType);
-      obj[chosenType](this.req, this, this.req.next);
+      obj[chosenType]();
     } else if (defaultFn) {
-      return defaultFn(this.req, this, this.req.next);
+      return defaultFn();
     } else {
-      var err = new Error('Not Acceptable');
-      err.status = err.statusCode = 406;
-      err.types = types;
-      this.req.next(err);
+      this.status(406).send('Not Acceptable');
     }
 
     return this;

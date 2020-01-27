@@ -2,8 +2,9 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { Accepts } from 'accepts';
 import { Readable } from 'stream';
+import { IncomingMessage } from 'http';
 
-export class Request extends Readable {
+export interface Request extends IncomingMessage {
     constructor(event: APIGatewayProxyEvent);
     headers: { [name: string]: string };
     hostname: string | null;

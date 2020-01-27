@@ -2,123 +2,117 @@ const { use } = require('./lambda-wrapper');
 const bodyParser = require('body-parser');
 
 describe('Lambda Wrapper', () => {
-  const proxyRequest = {
-    body: null,
-    headers: {},
-    multiValueHeaders: {},
-    httpMethod: 'POST',
-    isBase64Encoded: false,
-    path: '/path',
-    pathParameters: { },
-    queryStringParameters: { },
-    multiValueQueryStringParameters: { },
-    stageVariables: { },
-    requestContext: {},
-    resource: ''
-  };
+  let proxyRequest;
+  beforeEach(() => {
+    proxyRequest = {
+      body: null,
+      headers: {},
+      multiValueHeaders: {},
+      httpMethod: 'POST',
+      isBase64Encoded: false,
+      path: '/path',
+      pathParameters: {},
+      queryStringParameters: {},
+      multiValueQueryStringParameters: {},
+      stageVariables: {},
+      requestContext: {},
+      resource: ''
+    };
+  });
 
   it('should send json output properly', async () => {
 
     const lambdaHandler = use((req, res) => {
-      res.json({a: 1});
+      res.json({ a: 1 });
     });
 
-    const proxyRequest = {
+    proxyRequest = {
       body: '',
       headers: {},
       multiValueHeaders: {},
       httpMethod: 'GET',
       isBase64Encoded: false,
       path: '/path',
-      pathParameters: { },
-      queryStringParameters: { },
-      multiValueQueryStringParameters: { },
-      stageVariables: { },
+      pathParameters: {},
+      queryStringParameters: {},
+      multiValueQueryStringParameters: {},
+      stageVariables: {},
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: '{"a":1}'
-      });
-    };
 
-    await lambdaHandler(proxyRequest, {}, callback);
+    const payload = await lambdaHandler(proxyRequest, {});
+    expect(payload).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: '{"a":1}'
+    });
 
   });
 
 
-  it('should handle json body on a post request', () => {
+  it('should handle json body on a post request', async () => {
 
     const lambdaHandler = use(bodyParser.json(), (req, res) => {
       res.json(req.body);
     });
 
-    const requestObject = JSON.stringify({a: 1});
+    const requestObject = JSON.stringify({ a: 1 });
 
-    const proxyRequest = {
+    proxyRequest = {
       body: requestObject,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': requestObject.length
       },
       multiValueHeaders: {
-        'Content-Type': [ 'application/json' ],
-        'Content-Length': [ requestObject.length ]
+        'Content-Type': ['application/json'],
+        'Content-Length': [requestObject.length]
       },
       httpMethod: 'POST',
       isBase64Encoded: false,
       path: '/path',
-      pathParameters: { },
-      queryStringParameters: { },
-      multiValueQueryStringParameters: { },
-      stageVariables: { },
+      pathParameters: {},
+      queryStringParameters: {},
+      multiValueQueryStringParameters: {},
+      stageVariables: {},
       requestContext: {},
       resource: ''
     };
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: requestObject
-      });
-    }
 
-    lambdaHandler(proxyRequest, {}, callback);
+    const payload = await lambdaHandler(proxyRequest, {});
 
+    expect(payload).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: requestObject
+    });
   });
 
-  it('should run multiple middlewares', () => {
+  it('should run multiple middlewares', async () => {
     const lambdaHandler = use((req, res, next) => {
       req.params.fromFirstEndpoint = '1';
       next();
     }, (req, res) => {
-      res.json({b: req.params.fromFirstEndpoint});
+      res.json({ b: req.params.fromFirstEndpoint });
     });
 
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({"b":"1"})
-      });
-    }
+    const payload = await lambdaHandler(proxyRequest, {});
 
-    lambdaHandler(proxyRequest, {}, callback);
+    expect(payload).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ "b": "1" })
+    });
   });
 
-  it('should run multiple middlewares as arrays', () => {
+  it('should run multiple middlewares as arrays', async () => {
     const lambdaHandler = use([(req, res, next) => {
       req.params.fromFirstEndpoint = '1';
       next();
@@ -132,32 +126,28 @@ describe('Lambda Wrapper', () => {
       })
     });
 
-    const callback = (err, payload) => {
-      expect(err).toBe(null);
-      expect(payload).toEqual({
-        statusCode: 200,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          fromFirstEndpoint: '1',
-          fromSecondEndpoint: '1',
-        })
-      });
-    }
+    const payload = await lambdaHandler(proxyRequest, {});
 
-    lambdaHandler(proxyRequest, {}, callback);
+    expect(payload).toEqual({
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        fromFirstEndpoint: '1',
+        fromSecondEndpoint: '1',
+      })
+    });
   });
 
-  it('should handle errors', () => {
+  it('should handle errors', async () => {
+    expect.assertions(1);
+
     const lambdaHandler = use((req, res, next) => {
-      throw Error('test');
+      throw new Error('test');
     });
 
-    const callback = (err, payload) => {
-      expect(err).toStrictEqual(Error('test'));
-    }
+    await expect(lambdaHandler(proxyRequest, {})).rejects.toThrow(Error);
 
-    lambdaHandler(proxyRequest, {}, callback);
-  })
+  });
 });

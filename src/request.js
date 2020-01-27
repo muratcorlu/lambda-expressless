@@ -41,6 +41,8 @@ class Request extends ReadableStream {
     this.host = this.get('X-Forwarded-Host') || this.hostname;
     this.xhr = (this.get('X-Requested-With') || '').toLowerCase() === 'xmlhttprequest';
 
+    this.url = `${this.headers}${this.path}`;
+
     this.event = event;
     this.accept = accepts(this);
 

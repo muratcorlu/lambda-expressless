@@ -1,7 +1,8 @@
 import { Request } from "./request";
 import { APIGatewayProxyCallback, APIGatewayProxyResult } from 'aws-lambda';
+import { ServerResponse } from "http";
 
-export class Response {
+export interface Response extends ServerResponse {
     /**
      * Response object constructor
      *
@@ -10,8 +11,8 @@ export class Response {
     */
     constructor(req: Request, callback: APIGatewayProxyCallback);
     req: Request;
-    callback: APIGatewayProxyCallback;
-    responseObj: APIGatewayProxyResult;
+    callback?: APIGatewayProxyCallback;
+    responseObj?: APIGatewayProxyResult;
     /**
      * Ends the response process.
     */

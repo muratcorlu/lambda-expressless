@@ -1,21 +1,33 @@
 const { Response } = require('./response');
 const { Request } = require('./request');
 
+const promisify = (handler, req, res) => new Promise((resolve, reject) => {
+  try {
+    handler(req, res, resolve);
+  } catch (error) {
+    reject(error);
+  }
+});
+
 exports.use = (...handlers) => {
-  return (event, context, callback) => {
+  return (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const request = new Request(event);
-    const response = new Response(request, callback);
+    const response = new Response(request);
+
     request.res = response;
 
-    handlers = [].concat(...handlers);
+    return new Promise((resolve, reject) => {
 
-    handlers.reduce((chain, handler) => chain.then(
-      () => new Promise((resolve) => {
-        request.next = resolve;
-        return handler(request, response, resolve);
-      })
-    ).catch(callback), Promise.resolve());
+      response.promise.then(resolve, reject);
+
+      [].concat(...handlers).reduce(
+        (queue, handler) =>
+          queue.then(() => promisify(handler, request, response)
+        ),
+        Promise.resolve()
+      ).catch(reject);
+    });
   }
 }
