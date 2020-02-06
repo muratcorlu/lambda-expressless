@@ -141,11 +141,22 @@ describe('Request object', () => {
   });
 
   it('should handle content-length header if its not provided', () => {
-    delete event.headers['content-length'];
-    delete event.multiValueHeaders['content-length'];
+    delete event.headers['Content-Length'];
+    delete event.multiValueHeaders['Content-Length'];
+    const body = JSON.stringify(requestObject);
+    event.body = body
 
     const request = new Request(event);
-    const body = JSON.stringify(requestObject);
     expect(request.get('content-length')).toBe(body.length);
+  })
+
+  it('should handle non-ascii content-length if header is not provided', () => {
+    delete event.headers['Content-Length'];
+    delete event.multiValueHeaders['Content-Length'];
+    const body = JSON.stringify({text:"árvíztűrőtükörfúrógép"});
+    event.body = body
+
+    const request = new Request(event);
+    expect(request.get('content-length')).toBe(41);
   })
 });
