@@ -4,8 +4,9 @@ import { Accepts } from 'accepts';
 import { Readable } from 'stream';
 import { IncomingMessage } from 'http';
 
-export interface Request extends IncomingMessage {
+export class Request extends IncomingMessage {
     constructor(event: APIGatewayProxyEvent);
+    body: any;
     headers: { [name: string]: string };
     hostname: string | null;
     method: string;

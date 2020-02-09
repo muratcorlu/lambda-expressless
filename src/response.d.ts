@@ -2,7 +2,7 @@ import { Request } from "./request";
 import { APIGatewayProxyCallback, APIGatewayProxyResult } from 'aws-lambda';
 import { ServerResponse } from "http";
 
-export interface Response extends ServerResponse {
+export class Response extends ServerResponse {
     /**
      * Response object constructor
      *
