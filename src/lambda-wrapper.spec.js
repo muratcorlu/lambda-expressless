@@ -130,7 +130,6 @@ describe('Lambda Wrapper', () => {
     })
     const lambdaHandler = ApiGatewayHandler(router)
     const out = await lambdaHandler(proxyRequest, {})
-    console.log(out)
   })
   
   it('should handle next(error)', async () => {

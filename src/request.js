@@ -2,6 +2,17 @@ const ReadableStream = require('stream').Readable;
 const accepts = require('accepts');
 const typeis = require('type-is');
 
+function byteLength(str) {
+  // returns the byte length of an utf8 string
+  let s = str.length
+  for (let i=str.length-1; i>=0; i--) {
+    const code = str.charCodeAt(i)
+    if (code > 0x7f && code <= 0x7ff) s++
+    else if (code > 0x7ff && code <= 0xffff) s+=2
+  }
+  return s
+}
+
 /**
  *
  */
@@ -43,7 +54,7 @@ class Request extends ReadableStream {
     this.params = event.pathParameters;
 
     if (!this.get('Content-Length') && event.body) {
-      this.headers['content-length'] = event.body.length;
+      this.headers['content-length'] = byteLength (event.body);
     }
 
     this.protocol = this.get('X-Forwarded-Proto')
