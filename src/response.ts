@@ -1,49 +1,67 @@
-const EventEmitter = require('events');
+import { EventEmitter } from 'events'
+import { Request } from './request'
+import { APIGatewayProxyCallback, APIGatewayProxyResult } from 'aws-lambda'
 
-const AWS_RES_BODY = Symbol('body')
-const AWS_RES_HEADERS = Symbol('body')
-const AWS_RES_MULTI_VALUE_HEADERS = Symbol('body')
-const ON_FINISHED = Symbol('body')
+export class FormatError extends Error {
+  status: number
+  statusCode: number
+  types: string[]
+  constructor(message: string, status: number, types: string[]) {
+    super(message)
+    this.status = status
+    this.statusCode = status
+    this.types = types
+  }
+}
 
 /**
  * Response Object
  */
-class Response extends EventEmitter {
+export class Response extends EventEmitter {
+  req: Request
+  writableEnded: boolean
+  statusCode: number
+  expresslesOnFinished: APIGatewayProxyCallback
+  expresslessResBody: unknown
+  expresslessResHeaders: { [k: string]: string }
+  expresslessResMultiValueHeaders: { [k: string]: string[] } | undefined;
+  [k: string]: any
   /**
    * Response object constructor
    *
    * @param {Request} req Request object for this Response
    */
-  constructor(req, onFinished) {
-    super ()
-    this.req = req;
+  constructor(req: Request, onFinished: APIGatewayProxyCallback) {
+    super()
+    this.req = req
     this.writableEnded = false
     this.statusCode = 200
-    // Non-Express compatible props: Use symbols to avoid name clashes
-    this[AWS_RES_HEADERS] = {}
-    this[AWS_RES_MULTI_VALUE_HEADERS] = undefined
-    this[AWS_RES_BODY] = ''
-    this[ON_FINISHED] = onFinished
+    // Non-Express compatible props
+    this.expresslessResHeaders = {}
+    this.expresslessResMultiValueHeaders = undefined
+    this.expresslessResBody = ''
+    this.expresslesOnFinished = onFinished
   }
 
   /**
    * Ends the response process.
    */
   end() {
-    // End must not be called twice to ensure compatibility with writable streams. 
+    // End must not be called twice to ensure compatibility with writable streams.
     // https://nodejs.org/api/stream.html#stream_writable_writableended
     if (this.writableEnded) throw new Error('write after end')
     this.writableEnded = true
     this.emit('finished')
-    const body = this[AWS_RES_BODY]
+    const body = this.expresslessResBody
     const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
-    const apiGatewayResult = {
+    const apiGatewayResult: APIGatewayProxyResult = {
       statusCode: this.statusCode,
-      headers: this[AWS_RES_HEADERS],
+      headers: this.expresslessResHeaders,
       body: bodyStr
     }
-    if (this[AWS_RES_MULTI_VALUE_HEADERS]) apiGatewayResult.multiValueHeaders = this[AWS_RES_MULTI_VALUE_HEADERS]
-    this[ON_FINISHED](apiGatewayResult)
+    if (this.expresslessResMultiValueHeaders)
+      apiGatewayResult.multiValueHeaders = this.expresslessResMultiValueHeaders
+    this.expresslesOnFinished(null, apiGatewayResult)
   }
 
   /**
@@ -51,8 +69,8 @@ class Response extends EventEmitter {
    *
    * @param {string} key Header key to get
    */
-  get(key) {
-    return this[AWS_RES_HEADERS][key.toLowerCase()];
+  get(key: string) {
+    return this.expresslessResHeaders[key.toLowerCase()]
   }
 
   /**
@@ -93,28 +111,27 @@ class Response extends EventEmitter {
    * a `.default` callback it will be invoked
    * instead.
    *
-   * @param {Object} obj
-   * @return {ServerResponse} for chaining
    * @public
    */
-  format(obj) {
-    const defaultFn = obj.default;
-    const types = Object.keys(obj);
-    const chosenType = this.req.accepts(types);
-
-    if (chosenType) {
-      this.type(chosenType);
-      obj[chosenType](this.req, this, this.req.next);
-    } else if (defaultFn) {
-      return defaultFn(this.req, this, this.req.next);
-    } else {
-      var err = new Error('Not Acceptable');
-      err.status = err.statusCode = 406;
-      err.types = types;
-      this.req.next(err);
+  format(obj: { [k: string]: (req?: Request, res?: Response) => void }) {
+    const defaultFn = obj.default
+    const types = Object.keys(obj)
+    let chosenType = this.req.accepts(...types)
+    if (Array.isArray(chosenType)) {
+      chosenType = chosenType[0]
     }
 
-    return this;
+    if (chosenType) {
+      this.type(chosenType)
+      obj[chosenType](this.req, this)
+    } else if (defaultFn) {
+      return defaultFn(this.req, this)
+    } else {
+      var err = new FormatError('Not Acceptable', 406, types)
+      this.expresslesOnFinished(err)
+    }
+
+    return this
   }
 
   /**
@@ -127,53 +144,60 @@ class Response extends EventEmitter {
    * res.json({ user: 'tobi' })
    * res.status(500).json({ error: 'message' })
    * ```
-   * @param {any} body Any type of oject
+   * @param body Any type of oject
    */
-  json(body) {
-    this.set('Content-Type', 'application/json');
-    this.send(JSON.stringify(body));
+  json(body: any) {
+    this.set('Content-Type', 'application/json')
+    this.send(JSON.stringify(body))
   }
 
   /**
    * Sends the HTTP response.
-   *
-   * @param {any} body
    */
-  send(body) {
-    this[AWS_RES_BODY] = body;
-    this.end();
+  send(body: any) {
+    this.expresslessResBody = body
+    this.end()
   }
 
   /**
    * Set response header
    *
-   * @param {string} key Header key
-   * @param {string} value Header value
+   * @param key Header key
+   * @param value Header value
    */
-  set(key, value) {
-    this[AWS_RES_HEADERS][key.toLowerCase()] = value;
-    return this;
+  set(key: string, value: string) {
+    this.expresslessResHeaders[key.toLowerCase()] = value
+    return this
   }
 
   /**
    * Set cookie
-   *
-   * @param {string} key Cookie name
-   * @param {string} value Cookie value
-   * @param {{domain: string, expires: Date, maxAge: number, path: string, sameSite: string, httpOnly:boolean, secure: boolean}} options
    */
-  cookie(key, value, options={}) {
-    if (! options['path']) {
+  cookie(
+    key: string,
+    value: string,
+    options: {
+      domain?: string
+      expires?: Date
+      maxAge?: number
+      path?: string
+      sameSite?: string
+      httpOnly?: boolean
+      secure?: boolean
+      [k: string]: string | Date | boolean | number | undefined
+    } = {}
+  ) {
+    if (!options['path']) {
       options['path'] = '/'
     }
-    let cookieStr = `${key}=${value}`;
+    let cookieStr = `${key}=${value}`
     for (const optKey in options) {
       switch (optKey.toLocaleLowerCase()) {
         case 'domain':
-          cookieStr += `; Domain=${options[optKey]}`
+          cookieStr += `; Domain=${options.domain}`
           break
         case 'expires':
-          cookieStr += `; Expires=${options[optKey].toUTCString()}`
+          cookieStr += `; Expires=${options.expires?.toUTCString()}`
           break
         case 'maxage':
           cookieStr += `; Max-Age=${options[optKey]}`
@@ -195,37 +219,38 @@ class Response extends EventEmitter {
           }
           break
         default:
-          console.warn (`Warning: Cookie paramterer ${optKey} not supported`)
+          console.warn(`Warning: Cookie paramterer ${optKey} not supported`)
       }
     }
-    if (!this[AWS_RES_MULTI_VALUE_HEADERS]) {
-      this[AWS_RES_MULTI_VALUE_HEADERS] = {'Set-Cookie': [cookieStr]};
+    if (!this.expresslessResMultiValueHeaders) {
+      this.expresslessResMultiValueHeaders = { 'Set-Cookie': [cookieStr] }
     } else {
-      const cookies = this[AWS_RES_MULTI_VALUE_HEADERS]['Set-Cookie'] || []
-      cookies.push (cookieStr)
+      const cookies = this.expresslessResMultiValueHeaders['Set-Cookie'] || []
+      cookies.push(cookieStr)
+      this.expresslessResMultiValueHeaders['Set-Cookie'] = cookies
     }
-    return this;
+    return this
   }
 
   /**
    * Set status code for response
    *
-   * @param {integer} status Status code. Ex: 200, 201, 400, 404, 500 etc.
+   * @param status Status code. Ex: 200, 201, 400, 404, 500 etc.
    */
-  status(status) {
+  status(status: number) {
     this.statusCode = status
-    return this;
+    return this
   }
 
   /**
    * Sets the Content-Type HTTP header
    *
-   * @param {string} type Mime type will be set as Content-Type response header
+   * @param type Mime type will be set as Content-Type response header
    */
-  type(type) {
-    this.set('Content-Type', type);
-    return this;
+  type(type: string) {
+    this.set('Content-Type', type)
+    return this
   }
 }
 
-exports.Response = Response;
+exports.Response = Response

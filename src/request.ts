@@ -1,24 +1,47 @@
-const ReadableStream = require('stream').Readable;
-const accepts = require('accepts');
-const typeis = require('type-is');
+import { APIGatewayProxyEvent } from 'aws-lambda'
 
-function byteLength(str) {
+import { Readable } from 'stream'
+import accepts = require('accepts')
+import { IncomingMessage } from 'http'
+
+import typeis = require('type-is')
+import { Response } from './response'
+
+function byteLength(str: string) {
   // returns the byte length of an utf8 string
   let s = str.length
-  for (let i=str.length-1; i>=0; i--) {
+  for (let i = str.length - 1; i >= 0; i--) {
     const code = str.charCodeAt(i)
     if (code > 0x7f && code <= 0x7ff) s++
-    else if (code > 0x7ff && code <= 0xffff) s+=2
+    else if (code > 0x7ff && code <= 0xffff) s += 2
   }
-  return s
+  return s.toString()
 }
 
 /**
  *
  */
-class Request extends ReadableStream {
-  constructor(event) {
-    super();
+export class Request extends Readable {
+  headers: { [k: string]: string }
+  hostname: string | null
+  method: string
+  query: { [name: string]: string } | null
+  path: string
+  url: string
+  params: { [name: string]: string } | null
+  protocol: 'http' | 'https'
+  secure: boolean
+  ips: string[]
+  ip: string
+  host: string | null
+  xhr: boolean
+  event: APIGatewayProxyEvent
+  accept: accepts.Accepts
+  res: Response | null
+  constructor(event: APIGatewayProxyEvent) {
+    super()
+
+    this.res = null
 
     if (!event.multiValueHeaders) {
       event.multiValueHeaders = {}
@@ -28,49 +51,54 @@ class Request extends ReadableStream {
     }
 
     this.headers = Object.keys(event.multiValueHeaders).reduce((headers, key) => {
-      const value = event.multiValueHeaders[key];
-      headers[key.toLowerCase()] = value.length > 1 ? value : value[0];
-      return headers;
-    }, {});
+      const value = event.multiValueHeaders[key]
+      headers[key.toLowerCase()] = value[0]
+      return headers
+    }, {} as { [name: string]: string })
 
-    this.hostname = this.headers.host || '';
-    this.method = event.httpMethod;
+    this.hostname = this.headers.host || ''
+    this.method = event.httpMethod
 
     if (!event.multiValueQueryStringParameters) {
       event.multiValueQueryStringParameters = {}
       for (const queryParam in event.queryStringParameters) {
-        event.multiValueQueryStringParameters[queryParam] = [event.queryStringParameters[queryParam]]
+        event.multiValueQueryStringParameters[queryParam] = [
+          event.queryStringParameters[queryParam]
+        ]
       }
     }
 
-    this.query = Object.keys(event.multiValueQueryStringParameters).reduce((queryParams, key) => {
-      const value = event.multiValueQueryStringParameters[key];
-      queryParams[key] = value.length > 1 ? value : value[0];
-      return queryParams;
-    }, {});
+    this.query = Object.keys(event.multiValueQueryStringParameters || {}).reduce(
+      (queryParams, key) => {
+        const value = event.multiValueQueryStringParameters![key] // cannot be null at this point
+        queryParams[key] = value[0]
+        return queryParams
+      },
+      {} as { [name: string]: string }
+    )
 
-    this.path = event.path || '';
-    this.url = event.path;
-    this.params = event.pathParameters;
+    this.path = event.path || ''
+    this.url = event.path
+    this.params = event.pathParameters
 
     if (!this.get('Content-Length') && event.body) {
-      this.headers['content-length'] = byteLength (event.body);
+      this.headers['content-length'] = byteLength(event.body)
     }
 
-    this.protocol = this.get('X-Forwarded-Proto')
-    this.secure = this.protocol === 'https';
-    this.ips = (this.get('X-Forwarded-For') || '').split(', ');
-    this.ip = this.ips[0];
+    this.protocol = this.get('X-Forwarded-Proto') === 'https' ? 'https' : 'http'
+    this.secure = this.protocol === 'https'
+    this.ips = (this.get('X-Forwarded-For') || '').split(', ')
+    this.ip = this.ips[0]
     // Alternative way to obtain the source IP
     // this.ip = event.requestContext.identity.sourceIp
-    this.host = this.get('X-Forwarded-Host') || this.hostname;
-    this.xhr = (this.get('X-Requested-With') || '').toLowerCase() === 'xmlhttprequest';
+    this.host = this.get('X-Forwarded-Host') || this.hostname
+    this.xhr = (this.get('X-Requested-With') || '').toLowerCase() === 'xmlhttprequest'
 
-    this.event = event;
-    this.accept = accepts(this);
+    this.event = event
+    this.accept = accepts((this as unknown) as IncomingMessage)
 
-    this.push(event.body);
-    this.push(null);
+    this.push(event.body)
+    this.push(null)
   }
 
   /**
@@ -112,47 +140,43 @@ class Request extends ReadableStream {
    *     req.accepts('html, json');
    *     // => "json"
    *
-   * @param {String|Array} type(s)
-   * @return {String|Array|Boolean}
+   * @param type(s)
    * @public
    */
-  accepts() {
-    return this.accept.types.apply(this.accept, arguments);
+  accepts(...args: string[]) {
+    return this.accept.types.apply(this.accept, args)
   }
 
   /**
    * Check if the given `encoding`s are accepted.
    *
-   * @param {String} ...encoding
-   * @return {String|Array}
+   * @param ...encoding
    * @public
    */
-  acceptsEncodings() {
-    return this.accept.encodings.apply(this.accept, arguments);
+  acceptsEncodings(...args: string[]) {
+    return this.accept.encodings.apply(this.accept, args)
   }
 
   /**
    * Check if the given `charset`s are acceptable,
    * otherwise you should respond with 406 "Not Acceptable".
    *
-   * @param {String} ...charset
-   * @return {String|Array}
+   * @param ...charset
    * @public
    */
-  acceptsCharsets() {
-    return this.accept.charsets.apply(this.accept, arguments);
+  acceptsCharsets(...args: string[]) {
+    return this.accept.charsets.apply(this.accept, args)
   }
 
   /**
    * Check if the given `lang`s are acceptable,
    * otherwise you should respond with 406 "Not Acceptable".
    *
-   * @param {String} ...lang
-   * @return {String|Array}
+   * @param ...lang
    * @public
    */
-  acceptsLanguages() {
-    return this.accept.languages.apply(this.accept, arguments);
+  acceptsLanguages(...args: string[]) {
+    return this.accept.languages.apply(this.accept, args)
   }
 
   /**
@@ -174,32 +198,30 @@ class Request extends ReadableStream {
    *
    * Aliased as `req.header()`.
    *
-   * @param {String} name
-   * @return {String}
+   * @param name
    * @public
    */
-  get(key) {
-    return this.header(key);
+  get(key: string) {
+    return this.header(key)
   }
 
-  header(name) {
+  header(name: string): string | undefined {
     if (!name) {
-      throw new TypeError('name argument is required to req.get');
+      throw new TypeError('name argument is required to req.get')
     }
 
     if (typeof name !== 'string') {
-      throw new TypeError('name must be a string to req.get');
+      throw new TypeError('name must be a string to req.get')
     }
 
-    const lc = name.toLowerCase();
+    const lc = name.toLowerCase()
 
     switch (lc) {
       case 'referer':
       case 'referrer':
-        return this.headers.referrer
-          || this.headers.referer;
+        return this.headers.referrer || this.headers.referer
       default:
-        return this.headers[lc];
+        return this.headers[lc]
     }
   }
 
@@ -224,22 +246,11 @@ class Request extends ReadableStream {
    *      req.is('html');
    *      // => false
    *
-   * @param {String|Array} types...
-   * @return {String|false|null}
    * @public
    */
-  is(types) {
-    var arr = types;
-
-    // support flattened arguments
-    if (!Array.isArray(types)) {
-      arr = new Array(arguments.length);
-      for (var i = 0; i < arr.length; i++) {
-        arr[i] = arguments[i];
-      }
-    }
-    return typeis(this, arr);
+  is(types: string[]): string | false | null
+  is(...types: string[]): string | false | null
+  is(...types: any[]) {
+    return typeis((this as unknown) as IncomingMessage, ...types)
   }
 }
-
-exports.Request = Request;

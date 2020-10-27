@@ -2,8 +2,14 @@
   "name": "lambda-expressless",
   "version": "0.0.0-development",
   "description": "Wrap AWS Lambda functions with Express-like functions to simplify your code",
-  "main": "src/lambda-wrapper.js",
+  "source": "src/lambda-wrapper.ts",
+  "main": "dist/lambda-wrapper.js",
+  "types": "dist/lambda-wrapper.d.ts",
   "scripts": {
+    "prepare": "npm run build",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
     "test": "jest",
     "coverage": "jest --coverage",
     "travis-deploy-once": "travis-deploy-once",
@@ -21,12 +27,21 @@
   "homepage": "https://github.com/muratcorlu/lambda-expressless#readme",
   "devDependencies": {
     "body-parser": "^1.19.0",
-    "jest": "^24.9.0",
+    "jest": "^26.0.0",
+    "prettier": "^2.1.2",
     "router": "^1.3.3",
-    "semantic-release": "^15.13.21"
+    "semantic-release": "^15.13.21",
+    "ts-jest": "^26.4.3",
+    "@types/jest": "22.2.3",
+    "tslint": "^6.1.3",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^4.0.3"
   },
   "dependencies": {
+    "@types/node": "^14.11.2",
     "@types/aws-lambda": "^8.10.33",
+    "@types/accepts": "1.3.5",
+    "@types/type-is": "1.6.2",
     "accepts": "^1.3.7",
     "type-is": "^1.6.18"
   }
