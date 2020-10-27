@@ -19,7 +19,7 @@ export interface OnFinishedHandler {
  * @public
  */
 
-exports.ApiGatewayHandler = (router: Middleware, onFinished: OnFinishedHandler) => {
+const ApiGatewayHandler = (router: Middleware, onFinished: OnFinishedHandler) => {
   /**
    * Lambda Handler for API Gateway invocations
    *
@@ -58,3 +58,6 @@ exports.ApiGatewayHandler = (router: Middleware, onFinished: OnFinishedHandler) 
   }
   return handleApiGatewayEvent
 }
+
+export default { ApiGatewayHandler }
+module.exports = { ApiGatewayHandler }

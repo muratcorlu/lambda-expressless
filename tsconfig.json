@@ -2,8 +2,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "allowJs": true,
-    "target": "ES2015",
-    "lib": ["es2018"],
+    "target": "ES2019",
+    "lib": ["es2020"],
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "strict": true,
