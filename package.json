@@ -1,6 +1,6 @@
 {
   "name": "lambda-expressless",
-  "version": "2.0.3",
+  "version": "2.0.2",
   "description": "Wrap AWS Lambda functions with Express-like functions to simplify your code",
   "source": "src/lambda-wrapper.ts",
   "main": "dist/lambda-wrapper.js",

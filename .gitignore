@@ -60,5 +60,5 @@ typings/
 # next.js build output
 .next
 
-# dist - don't ignore it as there is a bug in npm which messes up installation of git modules with npm ci
-#dist
+# dist
+dist
