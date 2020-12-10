@@ -59,5 +59,5 @@ const ApiGatewayHandler = (router: Middleware, onFinished: OnFinishedHandler) =>
   return handleApiGatewayEvent
 }
 
-export default { ApiGatewayHandler }
+export { ApiGatewayHandler, Request, Response }
 module.exports = { ApiGatewayHandler }
