@@ -2,8 +2,10 @@ import { Request } from './request'
 import { Response } from './response'
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 
+export type NextFunction = (param?: unknown) => void
+
 export interface Middleware {
-  (request: Request, response: Response, next: (param?: unknown) => void): void
+  (request: Request, response: Response, next: NextFunction): void
 }
 
 export interface OnFinishedHandler {
