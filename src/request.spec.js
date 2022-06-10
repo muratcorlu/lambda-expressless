@@ -149,10 +149,27 @@ describe('Request object', () => {
   it('should handle non-ascii content-length if header is not provided', () => {
     delete event.headers['Content-Length']
     delete event.multiValueHeaders['Content-Length']
-    const body = JSON.stringify({ text: 'árvíztűrőtükörfúrógép' })
-    event.body = body
 
+    event.body = JSON.stringify({ text: 'árvíztűrőtükörfúrógép😄' })
+    const request = new Request(event)
+    expect(request.get('content-length')).toBe('45')
+  })
+
+  it('should handle Japanese characters', () => {
+    delete event.headers['Content-Length']
+    delete event.multiValueHeaders['Content-Length']
+
+    event.body = JSON.stringify('Tシャツを3 枚購入しました。')
     const request = new Request(event)
     expect(request.get('content-length')).toBe('41')
+  })
+
+  it('should handle special characters', () => {
+    delete event.headers['Content-Length']
+    delete event.multiValueHeaders['Content-Length']
+
+    event.body = JSON.stringify('🇨🇭🇺🇸🇯🇵🇭🇺🇬🇷🇵🇱∃⇔€🎉')
+    const request = new Request(event)
+    expect(request.get('content-length')).toBe('63')
   })
 })

@@ -7,17 +7,6 @@ import { IncomingMessage } from 'http'
 import typeis = require('type-is')
 import { Response } from './response'
 
-function byteLength(str: string) {
-  // returns the byte length of an utf8 string
-  let s = str.length
-  for (let i = str.length - 1; i >= 0; i--) {
-    const code = str.charCodeAt(i)
-    if (code > 0x7f && code <= 0x7ff) s++
-    else if (code > 0x7ff && code <= 0xffff) s += 2
-  }
-  return s.toString()
-}
-
 /**
  *
  */
@@ -82,7 +71,7 @@ export class Request extends Readable {
     this.params = event.pathParameters
 
     if (!this.get('Content-Length') && event.body) {
-      this.headers['content-length'] = byteLength(event.body)
+      this.headers['content-length'] = Buffer.byteLength(event.body, 'utf8').toString()
     }
 
     this.protocol = this.get('X-Forwarded-Proto') === 'https' ? 'https' : 'http'
