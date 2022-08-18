@@ -14,7 +14,7 @@ export class Request extends Readable {
   headers: { [k: string]: string }
   hostname: string | null
   method: string
-  query: { [name: string]: string } | null
+  query: { [name: string]: string | string[] } | null
   path: string
   url: string
   params: { [name: string]: string } | null
@@ -60,10 +60,11 @@ export class Request extends Readable {
     this.query = Object.keys(event.multiValueQueryStringParameters || {}).reduce(
       (queryParams, key) => {
         const value = event.multiValueQueryStringParameters![key] // cannot be null at this point
-        queryParams[key] = value[0]
+        const _key = key.replace(/\[\]/, '')
+        queryParams[_key] = value.length > 1 ? value : value[0]
         return queryParams
       },
-      {} as { [name: string]: string }
+      {} as { [name: string]: string | string[] }
     )
 
     this.path = event.path || ''

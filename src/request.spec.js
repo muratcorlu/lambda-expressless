@@ -22,11 +22,13 @@ describe('Request object', () => {
       pathParameters: {},
       queryStringParameters: {
         a: '1',
-        b: '2'
+        b: '2',
+        'c[]': 'name'
       },
       multiValueQueryStringParameters: {
         a: ['1'],
-        b: ['1', '2']
+        b: ['1', '2'],
+        'c[]': ['-firstName', 'lastName']
       },
       stageVariables: {},
       requestContext: {},
@@ -43,7 +45,8 @@ describe('Request object', () => {
   it('should read first value of query parameter with multiple values', () => {
     const request = new Request(event)
 
-    expect(request.query.b).toEqual('1')
+    expect(request.query.b).toEqual(['1', '2'])
+    expect(request.query.c).toEqual(['-firstName', 'lastName'])
   })
 
   it('should read header', () => {
